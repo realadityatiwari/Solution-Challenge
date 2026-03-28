@@ -1,0 +1,7 @@
+{
+    "python.defaultInterpreterPath": "",
+    "python.analysis.extraPaths": [
+        "p:/GOD Level Computer Science Engineering/Hack(GDG)/antigravity-digital-shield/backend",
+        "p:/GOD Level Computer Science Engineering/Hack(GDG)/antigravity-digital-shield/backend/venv/Lib/site-packages"
+    ]
+}

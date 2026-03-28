@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn==0.29.0
+python-multipart==0.0.9
+opencv-python
+# Media fingerprinting and hash dependencies
+ImageHash
+Pillow
+numpy
+# Local Vector DB
+chromadb
+# Google GenAI for Gemini 1.5 Integration
+google-genai

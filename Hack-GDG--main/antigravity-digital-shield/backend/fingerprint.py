@@ -93,3 +93,24 @@ def index_authorized_video(video_path, video_id):
         metadatas=[{"video_id": video_id, "type": "authorized"}] * len(frames)
     )
     return True
+
+def get_all_fingerprints():
+    """Aggregates all keyframes from ChromaDB into a list of unique videos indexed"""
+    results = collection.get(include=["metadatas"])
+    video_data = {}
+    
+    if results and results.get('metadatas'):
+        for meta in results['metadatas']:
+            if not meta: continue
+            vid_id = meta.get("video_id", "Unknown")
+            if vid_id not in video_data:
+                video_data[vid_id] = {
+                    "id": vid_id,
+                    "name": f"Authorized Asset: {vid_id}",
+                    "date": "Chroma Vault",
+                    "count": 0,
+                    "matchRate": 100.0
+                }
+            video_data[vid_id]["count"] += 1
+            
+    return list(video_data.values())

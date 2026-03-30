@@ -66,18 +66,18 @@ export async function analyzeNewsAction(formData: FormData) {
     return {
       status: "success",
       report: {
-        classification: "Fake / Fabricated",
-        confidence_score: 0.92,
-        source_credibility: "Suspicious",
-        misappropriation_detected: false,
-        anomaly_detected: true,
-        key_flags: [
-          "No official league confirmation of this trade",
-          "Sudden spike in sharing across unverified accounts",
-          "Fabricated quote from team management"
+        authenticity_verdict: "Completely Fake",
+        fake_probability: 0.98,
+        key_claims_analysis: [
+          "Claim 1: The player was traded. FALSE. No official transaction logs exist.",
+          "Claim 2: The GM gave a quote confirming it. FALSE. The quote is fabricated and uncharacteristic."
         ],
-        explanation: "Mock Fallback: The text claims a trade occurred that has not been reported by any official league sources. The alleged quote from the general manager is completely fabricated, and the distribution pattern is highly anomalous.",
-        takedown_letter_draft: "To whom it may concern,\n\nWe represent the NBA regarding brand protection. It has come to our attention that your publication is hosting an article containing completely fabricated quotes and false trade information designed to act as clickbait.\n\nWe demand immediate removal of this libelous article to prevent further misinformation regarding our franchises and management.\n\nSincerely,\nIP Protection Team\nAntigravity Digital Shield"
+        red_flags: [
+          "Unverified source domain",
+          "Excessive punctuation and sensationalism",
+          "Timing suggests a deliberate attempt to manipulate betting odds"
+        ],
+        contextual_gaps: "Missing corroboration from verified NBA sportswriters or official team press releases."
       }
     };
   }
@@ -102,5 +102,94 @@ export async function uploadFingerprintAction(formData: FormData) {
       message: "Mock: Video securely indexed in ChromaDB Vault.",
       video_id: formData.get("video_id") as string
     };
+  }
+}
+
+export async function getFingerprintsAction() {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/fingerprints', { cache: 'no-store' });
+    if (!res.ok) throw new Error("Backend error fetching fingerprints");
+    const data = await res.json();
+    return data.fingerprints || [];
+  } catch (error) {
+    console.error("Failed to fetch fingerprints:", error);
+    return [];
+  }
+}
+
+export async function getTakedownQueueAction() {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/takedown-queue', { cache: 'no-store' });
+    if (!res.ok) throw new Error("Backend error fetching queue");
+    const data = await res.json();
+    return data.queue || [];
+  } catch (error) {
+    console.error("Failed to fetch takedown queue:", error);
+    return [];
+  }
+}
+
+export async function addTakedownQueueAction(item: {id: string, notice: string, violation: any}) {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/takedown-queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    if (!res.ok) throw new Error("Backend error adding to queue");
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to add to takedown queue:", error);
+    return { status: "error" };
+  }
+}
+
+export async function deleteTakedownQueueAction(id: string) {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/takedown-queue/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error("Backend error deleting from queue");
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to delete from takedown queue:", error);
+    return { status: "error" };
+  }
+}
+
+export async function getAgentLogsAction() {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/logs', { cache: 'no-store' });
+    if (!res.ok) throw new Error("Backend error fetching logs");
+    const data = await res.json();
+    return data.logs || "No logs available.";
+  } catch (error) {
+    console.error("Failed to fetch logs:", error);
+    return "Failed to connect to backend logs.";
+  }
+}
+
+export async function getLiveFeedAction() {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/live-feed', { cache: 'no-store' });
+    if (!res.ok) throw new Error("Backend error fetching live feed");
+    const data = await res.json();
+    return data.violations || [];
+  } catch (error) {
+    console.error("Failed to fetch live feed:", error);
+    return [];
+  }
+}
+
+export async function dismissViolationAction(id: string) {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/live-feed/dismiss/${id}`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error("Backend error dismissing violation");
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to dismiss violation:", error);
+    return { status: "error" };
   }
 }

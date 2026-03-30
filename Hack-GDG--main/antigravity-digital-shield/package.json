@@ -1,6 +1,7 @@
 {
   "name": "antigravity-digital-shield",
   "version": "1.0.0",
+  "type": "module",
   "description": "Monorepo root",
   "scripts": {
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
@@ -10,5 +11,9 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.3.1"
   }
 }

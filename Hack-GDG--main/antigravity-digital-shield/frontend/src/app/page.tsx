@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Video, Activity, Gavel, CheckCircle2, AlertTriangle, Eye, Shield, Link2, Clock, X, Terminal, FileText, Image as ImageIcon, UploadCloud, FileVideo, Send, Check } from 'lucide-react';
-import { generateTakedown, analyzeNewsAction, uploadFingerprintAction } from './actions';
+import { generateTakedown, analyzeNewsAction, uploadFingerprintAction, getFingerprintsAction, getTakedownQueueAction, addTakedownQueueAction, deleteTakedownQueueAction, getAgentLogsAction, getLiveFeedAction, dismissViolationAction } from './actions';
 
 export default function SOCDashboard() {
   const [selectedViolation, setSelectedViolation] = useState<any | null>(null);
   const [takedownDraft, setTakedownDraft] = useState<string | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
   const [timeStr, setTimeStr] = useState('');
+  const [activeTab, setActiveTab] = useState('feed');
 
   useEffect(() => {
     setTimeStr(new Date().toLocaleTimeString());
@@ -17,14 +18,38 @@ export default function SOCDashboard() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'queue') {
+       getTakedownQueueAction().then(q => setTakedownQueue(q));
+    } else if (activeTab === 'fingerprints') {
+       getFingerprintsAction().then(f => setIndexedAssets(f));
+    } else if (activeTab === 'feed') {
+       const fetchFeed = () => getLiveFeedAction().then(setViolations);
+       fetchFeed();
+       const interval = setInterval(fetchFeed, 3000);
+       return () => clearInterval(interval);
+    } else if (activeTab === 'logs') {
+       const fetchLogs = () => getAgentLogsAction().then(setAgentLogs);
+       fetchLogs();
+       const interval = setInterval(fetchLogs, 2000);
+       return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
+  const [agentLogs, setAgentLogs] = useState<string>("");
+  const logsEndRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab === 'logs' && logsEndRef.current) {
+        logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [agentLogs, activeTab]);
+
   // Asset Fingerprints State
   const [fingerprintFile, setFingerprintFile] = useState<File | null>(null);
   const [fingerprintVideoId, setFingerprintVideoId] = useState("");
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
-  const [indexedAssets, setIndexedAssets] = useState<{id: string, name: string}[]>([
-    { id: "LAL_MIA_03192026_CAM1", name: "Lakers vs Heat Q1 Broadcast" },
-    { id: "PHX_SAS_03192026_FEED", name: "Suns vs Spurs 4th Quarter Run" }
-  ]);
+  const [indexedAssets, setIndexedAssets] = useState<{id: string, name: string, count?: number}[]>([]);
 
   const handleFingerprintFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,7 +66,8 @@ export default function SOCDashboard() {
     
     const result = await uploadFingerprintAction(formData);
     if (result && result.status === 'success') {
-       setIndexedAssets(prev => [{ id: result.video_id, name: fingerprintFile.name }, ...prev]);
+       // Refresh list securely from backend
+       getFingerprintsAction().then(f => setIndexedAssets(f));
        setFingerprintFile(null);
        setFingerprintVideoId("");
     }
@@ -51,11 +77,11 @@ export default function SOCDashboard() {
   // Takedown Queue State
   const [takedownQueue, setTakedownQueue] = useState<{id: string, notice: string, violation: any}[]>([]);
 
-  const handleTransmitToISP = (id: string) => {
+  const handleTransmitToISP = async (id: string) => {
+    await deleteTakedownQueueAction(id);
     setTakedownQueue(prev => prev.filter(item => item.id !== id));
   };
 
-  const [activeTab, setActiveTab] = useState('feed');
   const [newsText, setNewsText] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -91,43 +117,23 @@ export default function SOCDashboard() {
     setIsScanningNews(false);
   };
 
-  // Mocked Data representing what was caught by the Sentry + Validator pipeline
-  const [violations, setViolations] = useState([
-    {
-      id: "V-9921A",
-      title: "LAKERS at HEAT | FULL GAME HIGHLIGHTS | March 19, 2026",
-      channel: "NBA", // Should be flagged as protected channel
-      url: "https://www.youtube.com/watch?v=SyXKBWaUV60",
-      match_score: 99.1,
-      timestamp: "Just now",
-      official_asset: "LAL_MIA_03192026_CAM1",
-      official_thumb: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&q=80&w=200",
-      pirated_thumb: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&q=80&w=200"
-    },
-    {
-      id: "V-9921B",
-      title: "SUNS at SPURS | 4TH QUARTER RUN",
-      channel: "HoopsFan99", 
-      url: "https://www.youtube.com/watch?v=xqV3-vk-Bzo",
-      match_score: 94.3,
-      timestamp: "2 mins ago",
-      official_asset: "PHX_SAS_03192026_FEED",
-      official_thumb: "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&q=80&w=200",
-      pirated_thumb: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=200"
-    }
-  ]);
+  // Dynamic data synced with Sentry + Validator pipeline from backend
+  const [violations, setViolations] = useState<any[]>([]);
 
-  const handleDismiss = (id: string) => {
+  const handleDismiss = async (id: string) => {
     setViolations(prev => prev.filter(v => v.id !== id));
+    await dismissViolationAction(id);
   };
 
-  const handleSendNotice = () => {
+  const handleSendNotice = async () => {
     if (selectedViolation && takedownDraft) {
-      setTakedownQueue(prev => [{
+      const newItem = {
          id: selectedViolation.id,
          notice: takedownDraft,
          violation: selectedViolation
-      }, ...prev]);
+      };
+      await addTakedownQueueAction(newItem);
+      setTakedownQueue(prev => [newItem, ...prev]);
       handleDismiss(selectedViolation.id);
     }
     closeTakedownDraft();
@@ -302,22 +308,26 @@ export default function SOCDashboard() {
                      value={newsText}
                      onChange={(e) => setNewsText(e.target.value)}
                      className="w-full h-48 bg-[#050505] border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-4 font-mono leading-relaxed"
-                     placeholder="Paste news text here... (optional if providing image)"
+                     placeholder="Paste news text, paragraphs, or suspicious URLs here... (optional if providing media)"
                    />
                    
                    <div className="mb-4">
                      {previewUrl ? (
                         <div className="relative inline-block border border-slate-700 rounded-lg overflow-hidden text-sm text-slate-400 bg-[#050505]">
-                           <img src={previewUrl} className="h-32 object-contain bg-slate-900/50" />
-                           <button onClick={removeImage} className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-400 text-white rounded-full">
+                           {selectedImage?.type.startsWith('video/') ? (
+                             <video src={previewUrl} controls className="h-32 object-contain bg-slate-900/50" />
+                           ) : (
+                             <img src={previewUrl} className="h-32 object-contain bg-slate-900/50" alt="News snippet" />
+                           )}
+                           <button onClick={removeImage} className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-400 text-white rounded-full z-10 shadow-md">
                               <X className="w-3 h-3" />
                            </button>
                         </div>
                      ) : (
                         <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-slate-700 border-dashed rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors bg-[#050505]">
-                          <ImageIcon className="w-4 h-4" />
-                          <span>Attach Screenshot</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                          <FileVideo className="w-4 h-4" />
+                          <span>Attach Media (Photo/Video)</span>
+                          <input type="file" accept="image/*,video/*" className="hidden" onChange={handleImageChange} />
                         </label>
                      )}
                    </div>
@@ -335,67 +345,61 @@ export default function SOCDashboard() {
                    {/* Results Box */}
                    {newsReport && (
                      <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}} className="bg-[#050505] border border-slate-800/60 rounded-lg p-6">
-                       <div className="flex items-center gap-4 mb-4">
-                         <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl border ${newsReport.confidence_score > 0.6 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
-                           {Math.round(newsReport.confidence_score * 100)}%
-                         </div>
-                         <div>
-                           <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                             Classification: <span className={newsReport.confidence_score > 0.6 ? "text-red-400" : "text-green-400"}>{newsReport.classification}</span>
-                           </h4>
-                           <p className="text-xs text-slate-500 mt-1">Source Credibility: <strong>{newsReport.source_credibility}</strong></p>
-                         </div>
-                       </div>
-                       
-                       <div className="flex gap-2 mb-6">
-                         {newsReport.misappropriation_detected && <span className="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold uppercase rounded flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Misappropriation</span>}
-                         {newsReport.anomaly_detected && <span className="px-2 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold uppercase rounded flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Viral Anomaly</span>}
-                         {!newsReport.misappropriation_detected && !newsReport.anomaly_detected && <span className="px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/20 text-[10px] font-bold uppercase rounded flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Origin Verified</span>}
-                       </div>
-                       
-                       <div className="space-y-6 text-sm">
-                         <div className="bg-slate-900/40 p-4 rounded-lg border border-slate-800/60">
-                           <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">AI Explanation</span>
-                           <p className="text-slate-300 leading-relaxed">{newsReport.explanation}</p>
-                         </div>
-                         
-                         {newsReport.key_flags && newsReport.key_flags.length > 0 && (
-                           <div>
-                             <span className="text-[10px] uppercase tracking-wider text-amber-500/70 font-bold block mb-2 flex items-center gap-2"><AlertTriangle className="w-3 h-3"/> Key Flags Identified</span>
-                             <ul className="list-disc list-inside space-y-2">
-                               {newsReport.key_flags.map((flag: string, i: number) => (
-                                 <li key={i} className="text-amber-100/80 italic text-xs marker:text-amber-500 pl-2">{flag}</li>
-                               ))}
-                             </ul>
-                           </div>
-                         )}
-                         
-                         {newsReport.takedown_letter_draft && newsReport.confidence_score > 0.6 && (
-                           <div>
-                             <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold block mb-2 flex items-center gap-2"><Gavel className="w-3 h-3"/> Warning Letter Drafted</span>
-                             <pre className="whitespace-pre-wrap font-mono text-[10px] text-slate-400 leading-relaxed bg-[#0a0a0a] p-4 rounded border border-red-900/40 max-h-48 overflow-y-auto mb-3">
-                               {newsReport.takedown_letter_draft}
-                             </pre>
-                             <div className="flex justify-end">
-                                <button
-                                  onClick={() => {
-                                     setTakedownQueue(prev => [{
-                                        id: `FAKE_NEWS_${Date.now()}`,
-                                        notice: newsReport.takedown_letter_draft,
-                                        violation: { channel: 'Pasted News Source' }
-                                     }, ...prev]);
-                                     setNewsReport(null);
-                                     setActiveTab('queue');
-                                  }}
-                                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white text-xs font-medium rounded-lg transition-all shadow-lg"
-                                >
-                                  <Send className="w-3.5 h-3.5" />
-                                  Push Draft to Queue
-                                </button>
-                             </div>
-                           </div>
-                         )}
-                       </div>
+                        <div className="flex items-center gap-4 mb-4 border-b border-slate-800/60 pb-6">
+                          <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold text-xl border ${newsReport.fake_probability > 0.6 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
+                            <span>{Math.round((1 - newsReport.fake_probability) * 100)}%</span>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                              Authenticity: <span className={newsReport.fake_probability > 0.6 ? "text-red-400" : "text-green-400"}>{newsReport.authenticity_verdict ?? "Unknown"}</span>
+                            </h4>
+                            <p className="text-xs text-slate-500 mt-1">Score represents the likelihood of the information being completely <strong className="text-green-400">TRUE</strong> based on logical analysis.</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6 text-sm mt-4">
+                            {newsReport.key_claims_analysis && newsReport.key_claims_analysis.length > 0 && (
+                                <div className="bg-slate-900/40 p-4 rounded-lg border border-indigo-900/40 shadow-inner overflow-hidden relative">
+                                   <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none"><CheckCircle2 className="w-16 h-16"/></div>
+                                   <span className="text-[10px] uppercase tracking-wider text-indigo-400 font-bold block mb-3 flex items-center gap-2"><Activity className="w-3 h-3"/> Truth Claims Breakdown</span>
+                                   <ul className="list-disc list-outside space-y-3 ml-4">
+                                     {newsReport.key_claims_analysis.map((claim: string, i: number) => (
+                                       <li key={i} className="text-slate-300 text-xs leading-relaxed marker:text-indigo-500">{claim}</li>
+                                     ))}
+                                   </ul>
+                                </div>
+                            )}
+
+                            {newsReport.contextual_gaps && (
+                                <div className="bg-slate-900/40 p-4 rounded-lg border border-slate-800/60">
+                                   <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2 flex items-center gap-2"><Shield className="w-3 h-3"/> Contextual Gaps</span>
+                                   <p className="text-slate-400 leading-relaxed text-xs">{newsReport.contextual_gaps}</p>
+                                </div>
+                            )}
+                            
+                            {newsReport.red_flags && newsReport.red_flags.length > 0 && (
+                                <div className="p-4 bg-red-950/20 rounded-lg border border-red-900/30">
+                                   <span className="text-[10px] uppercase tracking-wider text-red-500 font-bold block mb-3 flex items-center gap-2"><AlertTriangle className="w-3 h-3"/> Identified Red Flags & Tropes</span>
+                                   <ul className="list-disc list-outside space-y-2 ml-4">
+                                     {newsReport.red_flags.map((flag: string, i: number) => (
+                                       <li key={i} className="text-red-200/80 italic text-xs marker:text-red-500 leading-relaxed">{flag}</li>
+                                     ))}
+                                   </ul>
+                                </div>
+                            )}
+
+                            {newsReport.fake_probability > 0.6 && (
+                              <div className="mt-6 flex justify-end border-t border-slate-800/60 pt-6">
+                                 <button
+                                   onClick={() => setActiveTab('queue')}
+                                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white text-xs font-bold rounded-lg transition-all shadow-lg"
+                                 >
+                                   <Gavel className="w-4 h-4" />
+                                   View Draft in Takedown Queue
+                                 </button>
+                              </div>
+                            )}
+                        </div>
                      </motion.div>
                    )}
                 </div>
@@ -458,6 +462,7 @@ export default function SOCDashboard() {
                              <div>
                                <p className="text-xs font-bold text-slate-200">{asset.id}</p>
                                <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{asset.name}</p>
+                               {asset.count && <p className="text-[10px] text-indigo-400 mt-1">{asset.count} Keyframes Indexed</p>}
                              </div>
                            </div>
                            <span className="text-[10px] font-mono text-slate-600">ACTIVE</span>
@@ -520,11 +525,18 @@ export default function SOCDashboard() {
                 )}
               </motion.div>
             ) : (
-              <div className="bg-[#0a0a0a] border border-slate-800/60 p-12 flex flex-col items-center justify-center rounded-xl text-slate-500 min-h-[400px]">
-                 <Terminal className="w-12 h-12 mb-4 opacity-30" />
-                 <p className="text-lg font-medium text-slate-300 mb-2">Agent System Logs</p>
-                 <p className="text-sm text-center max-w-md">Live agent stdout monitoring will be available here.</p>
-              </div>
+              <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-[#0a0a0a] border border-slate-800/60 rounded-xl overflow-hidden shadow-none flex flex-col h-[600px]">
+                <div className="px-6 py-4 border-b border-slate-800/60 bg-slate-900/20 flex items-center justify-between">
+                   <h3 className="font-semibold text-slate-100 flex items-center gap-2"><Terminal className="w-5 h-5 text-green-400"/> Live Agent System Logs</h3>
+                   <span className="flex items-center gap-1.5 text-xs text-green-400 font-mono"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> STREAMING</span>
+                </div>
+                <div className="p-6 flex-1 overflow-auto bg-[#050505]">
+                  <pre className="font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    {agentLogs}
+                    <div ref={logsEndRef} />
+                  </pre>
+                </div>
+              </motion.div>
             )}
           </div>
         </div>

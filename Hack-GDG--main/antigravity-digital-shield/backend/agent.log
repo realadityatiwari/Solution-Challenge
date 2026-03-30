@@ -1,0 +1,27 @@
+2026-03-30 18:30:19,715 [INFO] Analyzing news snippet (text len: 329, media: None)
+2026-03-30 18:30:19,720 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 18:30:32,088 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-30 19:06:25,294 [INFO] Started background live news fetching persistent agent.
+2026-03-30 19:06:25,301 [INFO] Started background live news fetching persistent agent.
+2026-03-30 19:06:31,850 [INFO] Sentry Agent: Dynamically injected 3 new real-world alerts into the Live Feed.
+2026-03-30 19:06:39,348 [INFO] Started background live news fetching persistent agent.
+2026-03-30 19:08:33,872 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 19:20:47,053 [INFO] Started background live news fetching persistent agent.
+2026-03-30 19:21:03,748 [INFO] Started background live news fetching persistent agent.
+2026-03-30 19:22:55,866 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 19:53:24,171 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 19:53:24,791 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 19:57:29,555 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 19:57:29,965 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:05:37,269 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:05:37,651 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:13:45,996 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:13:46,404 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:48:18,971 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:48:19,078 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:52:24,072 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 20:52:24,157 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:06:37,419 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:06:37,851 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:35:02,872 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:35:03,533 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.

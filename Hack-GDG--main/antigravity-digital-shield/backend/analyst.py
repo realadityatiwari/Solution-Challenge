@@ -51,7 +51,7 @@ def analyze_video(video_path: str) -> dict[str, Any]:
     
     try:
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=[
                 video_file, 
                 "Please analyze the video snippet carefully and provide a rigorous violation likelihood score."
@@ -96,36 +96,34 @@ def analyze_video(video_path: str) -> dict[str, Any]:
     }
 
 class NewsViolationReport(BaseModel):
-    classification: str = Field(description="Authentic, Misleading, Manipulated, Fake / Fabricated, or Unauthorized Redistribution")
-    confidence_score: float = Field(description="Decimal ranging 0.0 to 1.0 reflecting your confidence")
-    source_credibility: str = Field(description="Official, Verified Media, Suspicious, or Unknown")
-    misappropriation_detected: bool = Field(description="True if content appears reused without authorization")
-    anomaly_detected: bool = Field(description="True if content is spreading in a suspicious pattern")
-    key_flags: list[str] = Field(description="Inconsistencies or suspicious elements identified")
-    explanation: str = Field(description="Clear explanation of WHY the content was flagged")
-    takedown_letter_draft: str = Field(description="Formal Cease & Desist / Warning letter generated if fake or misappropriated. Leave empty if authentic.")
+    authenticity_verdict: str = Field(description="A quick single-word/phrase summary: Verified, Mostly True, Mixed/Unverified, Mostly False, Completely Fake")
+    fake_probability: float = Field(description="Decimal ranging 0.0 to 1.0 reflecting how likely the news is FAKE (1.0 = completely fake, 0.0 = completely true)")
+    key_claims_analysis: list[str] = Field(description="Break down the major claims made in the text and analyze the likelihood of each being true or false based on logical consistency")
+    red_flags: list[str] = Field(description="Identify any sensationalism, emotional manipulation, logical fallacies, or lack of verifiable sources")
+    contextual_gaps: str = Field(description="Point out what information is missing that would be necessary to fully verify the story")
 
-def analyze_news(news_text: str = None, image_path: str = None) -> dict[str, Any]:
+def analyze_news(news_text: str = None, media_path: str = None) -> dict[str, Any]:
     """
-    Checks news articles, text transcripts, or images for unauthorized use of broadcast IP.
+    Checks news articles, text paragraphs, URLs, images, or videos for fake news, misinformation, and deepfakes.
     """
-    logging.info("Analyzing news snippet (text len: %s, image: %s)", len(news_text) if news_text else 0, image_path)
+    logging.info("Analyzing news snippet (text len: %s, media: %s)", len(news_text) if news_text else 0, media_path)
     
     if client is None:
         return {"error": "GenAI Client is not initialized.", "confidence_score": 0.0}
         
     system_instruction = (
-        "You are an advanced Digital Asset Protection and Fake News Detection AI specializing in sports media.\n"
-        "Your responsibilities include:\n"
-        "1. CONTENT AUTHENTICITY ANALYSIS: Determine whether the given sports-related content is authentic, manipulated, or potentially fake. Identify signs of tampering, misleading edits, or deepfake characteristics.\n"
-        "2. SOURCE VERIFICATION: Evaluate the credibility of the source. Classify sources as: Official, Verified Media, Suspicious, or Unknown. Cross-check claims with known patterns of official sports communication.\n"
-        "3. MISAPPROPRIATION DETECTION: Detect if the content appears to be reused, reposted, or redistributed without authorization. Identify watermark absence, altered branding, or mismatched metadata.\n"
-        "4. VIRAL ANOMALY DETECTION: Flag sudden spikes, bot-like distribution, or coordinated sharing.\n"
-        "5. FAKE NEWS CLASSIFICATION: Classify the content strictly as: Authentic, Misleading, Manipulated, Fake / Fabricated, or Unauthorized Redistribution.\n"
-        "6. CONFIDENCE SCORE: Parse out to a float matching 0.0 to 1.0 based on analysis.\n"
-        "7. EXPLANATION: Clearly explain WHY the content was flagged. Highlight specific inconsistencies, suspicious elements, or verification failures.\n"
-        "Rules: Be skeptical but not biased. Do not assume content is fake without evidence. Prefer structured reasoning over vague statements. Focus on sports media context.\n"
-        "If classification is fake or misappropriated, draft a legal takedown letter."
+        "You are an Elite Omni-Modal Forensics and Fake News Detection AI. Your objective is rigorous truth deduction.\n\n"
+        "You evaluate unstructured data across modalities: URLs, links, text, paragraphs, photos, and videos. Apply these investigative protocols:\n"
+        "► TEXT & PARAGRAPHS: Detect clickbait structures, logical fallacies, emotional manipulation, and contradictions. Check if paragraphs logically follow each other or rely on unsourced rumors.\n"
+        "► URLs & LINKS: Analyze domains mentioned for credibility (e.g., recognizable mainstream sites versus 'pink slime' journalism hubs, deceptive typosquatting, or known propaganda outlets).\n"
+        "► PHOTOS: Conduct visual forensics looking for AI-generated artifacts (e.g., six fingers, garbled text, unnatural skin textures, perfect symmetry, or impossible lighting).\n"
+        "► VIDEOS: Screen for temporal deepfakes, unnatural blinking, synthetic voice cloning artifacts, disjointed audio/visual sync, and physical physics impossibilities.\n\n"
+        "Provide a detailed report strictly reflecting this structure:\n"
+        "1. Authenticity Verdict: A quick phrase summary.\n"
+        "2. Fake Probability Score: 0.0 to 1.0 where 1.0 means COMPLETELY FAKE or DECEPTIVE, and 0.0 means 100% FACTUAL VERIFIED TRUTH.\n"
+        "3. Key Claims Analysis: Map out claims from the text, URL content hints, or media. Analyze their strict likelihood of truth.\n"
+        "4. Red Flags: List any detected manipulation tactics, AI hallmarks in media, or suspiciously unreliable domain links.\n"
+        "5. Contextual Gaps: Point out missing official sources, unverified quotes, or lack of credible corroboration."
     )
     
     contents = []
@@ -134,14 +132,14 @@ def analyze_news(news_text: str = None, image_path: str = None) -> dict[str, Any
         
     uploaded_file = None
     try:
-        if image_path:
-            uploaded_file = client.files.upload(file=image_path)
+        if media_path:
+            uploaded_file = client.files.upload(file=media_path)
             contents.append(uploaded_file)
             
-        contents.append("Please output in the exact requested STRICT JSON format per the defined rules.")
+        contents.append("Please evaluate the provided URLs, text paragraphs, photos, or videos utilizing your rigorous advanced forensics protocol. Output in EXACT structured JSON schema.")
         
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -153,11 +151,11 @@ def analyze_news(news_text: str = None, image_path: str = None) -> dict[str, Any
         
         parsed_data = json.loads(response.text)
         
-        if "confidence_score" not in parsed_data:
-            parsed_data["confidence_score"] = 0.0
-            parsed_data["error"] = "Agent failed to provide confidence_score."
+        if "fake_probability" not in parsed_data:
+            parsed_data["fake_probability"] = 0.0
+            parsed_data["error"] = "Agent failed to provide fake_probability."
         else:
-            parsed_data["confidence_score"] = float(parsed_data["confidence_score"])
+            parsed_data["fake_probability"] = float(parsed_data["fake_probability"])
             
         return parsed_data
         
@@ -165,7 +163,7 @@ def analyze_news(news_text: str = None, image_path: str = None) -> dict[str, Any
         logging.error("Failed to analyze news data: %s", str(e))
         return {
             "error": "Model reasoning failed or output format was invalid.",
-            "confidence_score": 0.0
+            "fake_probability": 0.0
         }
     finally:
         # Clean up the file to minimize storage costs

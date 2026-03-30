@@ -1,0 +1,26 @@
+[
+    {
+        "id": "V-9C0755",
+        "notice": "To the Designated Copyright Agent,\n\nI am writing on behalf of Antigravity Digital Shield, the authorized representative for the NBA. It has come to our attention that your platform is hosting content that infringes on our exclusive copyrights.\n\nInfringing Material:\nTitle: LAKERS at ROCKETS | FULL GAME HIGHLIGHTS | March 18, 2026\nChannel/Source: NBA\nURL: https://www.youtube.com/watch?v=tU6syGnXFG4\n\nWe have a good faith belief that this use is not authorized by the copyright owner, its agent, or the law. The information in this notice is accurate, and under penalty of perjury, we are authorized to act on behalf of the owner.\n\nPlease remove or disable access to this material immediately.\n\nSincerely,\nIP Protection Team\nAntigravity Digital Shield",
+        "violation": {
+            "id": "V-9C0755",
+            "title": "LAKERS at ROCKETS | FULL GAME HIGHLIGHTS | March 18, 2026",
+            "channel": "NBA",
+            "url": "https://www.youtube.com/watch?v=tU6syGnXFG4",
+            "match_score": 99.1,
+            "timestamp": "2026-03-20T20:05:02.000000",
+            "official_asset": "NBA_VAULT_DETECTED",
+            "official_thumb": "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&q=80&w=200",
+            "pirated_thumb": "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&q=80&w=200"
+        }
+    },
+    {
+        "id": "FN-AC22D7",
+        "notice": "To the Designated Agent,\n\nWe have identified this content as Malicious Disinformation / Fake News with a probability score of 1.0.\n\nSource: Breaking: Scientists have discovered that eating chocolate every day makes you live to 200 years old. This groundbreaking study was conducted by the U...\nKey Findings: Completely Fake\n\nPlease take immediate action to remove or disable access to this material.\n\nSincerely,\nAntigravity Digital Shield",
+        "violation": {
+            "title": "Malicious Disinformation / Fake News",
+            "channel": "Identified News Source",
+            "url": "Breaking: Scientists have discovered that eating chocolate every day makes you live to 200 years old. This groundbreaking study was conducted by the U..."
+        }
+    }
+]

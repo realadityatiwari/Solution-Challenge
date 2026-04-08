@@ -18,7 +18,7 @@ def create_dummy_video(path):
 def run_sentry_pipeline():
     # Load metadata dumped by Browser Agent
     try:
-        with open("scraped_data.json", "r") as f:
+        with open("scraped_data.json", "r", encoding="utf-8") as f:
             scraped_data = json.load(f)
     except Exception as e:
         logging.error(f"Failed to load scraped data: {e}")
@@ -26,7 +26,7 @@ def run_sentry_pipeline():
 
     logging.info(f"Sentry Agent: Starting scan of {len(scraped_data)} videos...")
     
-    with open("violations.log", "a") as log_file:
+    with open("violations.log", "a", encoding="utf-8") as log_file:
         for video in scraped_data:
             logging.info(f"Processing URL: {video['video_url']}")
             

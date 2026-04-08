@@ -102,80 +102,158 @@ class TakedownNotice(BaseModel):
     notice: str
     violation: dict
 
+# ─────────────────────────────────────────────────────────────────────────────
+# MULTI-CATEGORY RSS FEED SOURCES — 12 diverse news domains
+# ─────────────────────────────────────────────────────────────────────────────
+LIVE_NEWS_FEEDS = [
+    # World / Top Stories
+    {"url": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en", "channel": "Google News · World", "category": "World News"},
+    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml",                                          "channel": "BBC News · World",   "category": "World News"},
+    # Politics & Government
+    {"url": "https://news.google.com/rss/headlines/section/topic/POLITICS?hl=en-US&gl=US&ceid=US:en", "channel": "Google News · Politics", "category": "Politics & Elections"},
+    # Health & Medicine
+    {"url": "https://news.google.com/rss/headlines/section/topic/HEALTH?hl=en-US&gl=US&ceid=US:en",   "channel": "Google News · Health",   "category": "Health & Medicine"},
+    {"url": "https://www.who.int/rss-feeds/news-english.xml",                                          "channel": "WHO · Health Alerts",    "category": "Health & Medicine"},
+    # Science & Climate
+    {"url": "https://news.google.com/rss/headlines/section/topic/SCIENCE?hl=en-US&gl=US&ceid=US:en",  "channel": "Google News · Science",  "category": "Science & Climate"},
+    {"url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",                                          "channel": "NASA · Breaking News",   "category": "Science & Climate"},
+    # Technology & AI
+    {"url": "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en","channel": "Google News · Tech",     "category": "Technology & AI"},
+    # Finance & Business
+    {"url": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en",  "channel": "Google News · Business", "category": "Finance & Cryptocurrency"},
+    {"url": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US",           "channel": "Yahoo Finance · Markets","category": "Finance & Cryptocurrency"},
+    # Sports
+    {"url": "https://news.google.com/rss/headlines/section/topic/SPORTS?hl=en-US&gl=US&ceid=US:en",    "channel": "Google News · Sports",   "category": "Sports"},
+    {"url": "https://www.espn.com/espn/rss/news",                                                       "channel": "ESPN · Sports",          "category": "Sports"},
+    # Entertainment
+    {"url": "https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=en-US&gl=US&ceid=US:en","channel": "Google News · Entertainment","category": "Entertainment & Celebrity"},
+    # War & Conflict
+    {"url": "https://news.google.com/rss/search?q=conflict+war&hl=en-US&gl=US&ceid=US:en",             "channel": "Google News · Conflict", "category": "War & Conflict"},
+    # Climate & Environment
+    {"url": "https://news.google.com/rss/search?q=climate+change+environment&hl=en-US&gl=US&ceid=US:en","channel": "Google News · Climate", "category": "Science & Climate"},
+    # Viral / Social Media trending
+    {"url": "https://news.google.com/rss/search?q=viral+trending+social+media&hl=en-US&gl=US&ceid=US:en","channel": "Google News · Viral", "category": "Social Media Viral Content"},
+]
+
+def _fetch_one_feed(feed: dict, existing_urls: set) -> list:
+    """Fetches and parses a single RSS feed, returns new log entries."""
+    entries = []
+    try:
+        req = urllib.request.Request(feed["url"], headers={'User-Agent': 'Mozilla/5.0 (compatible; AntigravityShield/2.0)'})
+        with urllib.request.urlopen(req, timeout=8) as response:
+            xml_data = response.read()
+
+        root = ET.fromstring(xml_data)
+        items = root.findall('./channel/item')
+        if not items:
+            # Some feeds use Atom format
+            items = root.findall('.//{http://www.w3.org/2005/Atom}entry')
+
+        for item in items[:2]:  # Max 2 items per feed per cycle
+            # Support both RSS and Atom
+            title_el = item.find('title') or item.find('{http://www.w3.org/2005/Atom}title')
+            link_el  = item.find('link')  or item.find('{http://www.w3.org/2005/Atom}link')
+            date_el  = item.find('pubDate') or item.find('{http://www.w3.org/2005/Atom}published')
+
+            title   = title_el.text if title_el is not None and title_el.text else "Unknown Title"
+            link    = link_el.text if link_el is not None and link_el.text else (link_el.get("href", "") if link_el is not None else "")
+            pubDate = date_el.text if date_el is not None and date_el.text else datetime.datetime.utcnow().isoformat()
+
+            # Clean up Google News redirect links
+            if "news.google.com/rss/articles" in link:
+                link = link  # Keep as is; redirect ultimately lands on real URL
+
+            if not link or link in existing_urls:
+                continue
+
+            # Quick OG image extraction (best-effort, 3s timeout)
+            suspect_thumb = ""
+            try:
+                art_req = urllib.request.Request(link, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(art_req, timeout=3) as art_res:
+                    html = art_res.read(16000).decode('utf-8', errors='ignore')
+                    match = re.search(r'<meta property="og:image" content="(.*?)"', html)
+                    if match:
+                        suspect_thumb = match.group(1).replace("&amp;", "&")
+            except Exception:
+                pass
+
+            # Vulnerability score: reflects how "suspicious" a news item might be for demonstration
+            score = 55.0 + (len(title) % 35)
+
+            entries.append({
+                "timestamp": pubDate,
+                "title": f"[{feed['category'].upper()}] {title}",
+                "url": link,
+                "channel": feed["channel"],
+                "match_score": score,
+                "status": "Pending ARGUS Analysis",
+                "suspect_thumb": suspect_thumb,
+                "news_category": feed["category"],
+            })
+
+    except Exception as e:
+        logging.warning(f"Feed fetch failed [{feed['channel']}]: {e}")
+
+    return entries
+
+
 def fetch_live_news_loop():
-    # Wait for the server to be fully up before starting loops
-    time.sleep(5)
+    """
+    Background agent that continuously scrapes 12+ diverse news categories
+    and feeds them into the live violations dashboard.
+    Cycles through all feed sources to ensure maximum category coverage.
+    """
+    time.sleep(5)  # Wait for server startup
+
+    feed_index = 0  # Round-robin through feeds
+
     while True:
         try:
-            url = "https://news.google.com/rss/search?q=NBA&hl=en-US&gl=US&ceid=US:en"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            
-            with urllib.request.urlopen(req) as response:
-                xml_data = response.read()
-            
-            root = ET.fromstring(xml_data)
-            items = root.findall('./channel/item')
-            
-            if items:
-                # Take the top 3 items
-                new_items = items[:3]
-                
-                existing_urls = set()
-                if os.path.exists("violations.log"):
-                    with open("violations.log", "r") as f:
-                        for line in f:
-                            if not line.strip(): continue
-                            try:
-                                d = json.loads(line)
-                                existing_urls.add(d.get("url", ""))
-                            except:
-                                pass
-                
-                added_count = 0
-                with open("violations.log", "a") as f:
-                    for item in new_items:
-                        title = item.find('title').text if item.find('title') is not None else "Unknown Title"
-                        link = item.find('link').text if item.find('link') is not None else "Unknown URL"
-                        pubDate = item.find('pubDate').text if item.find('pubDate') is not None else datetime.datetime.utcnow().isoformat()
-                        
-                        # Simple de-duplication
-                        if link in existing_urls:
+            # Load existing URLs to prevent duplicates
+            existing_urls = set()
+            if os.path.exists("violations.log"):
+                with open("violations.log", "r") as f:
+                    for line in f:
+                        if not line.strip():
                             continue
-                            
-                        # Quick OG Image extraction
-                        suspect_thumb = ""
                         try:
-                            art_req = urllib.request.Request(link, headers={'User-Agent': 'Mozilla/5.0'})
-                            with urllib.request.urlopen(art_req, timeout=3) as art_res:
-                                html = art_res.read(16000).decode('utf-8', errors='ignore')
-                                match = re.search(r'<meta property="og:image" content="(.*?)"', html)
-                                if match:
-                                    suspect_thumb = match.group(1).replace("&amp;", "&")
+                            d = json.loads(line)
+                            existing_urls.add(d.get("url", ""))
                         except Exception:
                             pass
-                            
-                        # Assign high vulnerability score to force it into the UI for demonstration
-                        score = 80.0 + (len(title) % 19)
-                        
-                        log_entry = {
-                            "timestamp": pubDate,
-                            "title": f"[LIVE WEB SCANNED] {title}",
-                            "url": link,
-                            "channel": "Global Web / News Domain",
-                            "match_score": score,
-                            "status": "Flagged for Analyst Review",
-                            "suspect_thumb": suspect_thumb
-                        }
-                        f.write(json.dumps(log_entry) + "\n")
-                        added_count += 1
-                
-                if added_count > 0:
-                    logging.info(f"Sentry Agent: Dynamically injected {added_count} new real-world alerts into the Live Feed.")
-                    
+
+            # Pull from next 3 feeds in rotation (round-robin across all 16 feeds)
+            feeds_this_cycle = [
+                LIVE_NEWS_FEEDS[feed_index % len(LIVE_NEWS_FEEDS)],
+                LIVE_NEWS_FEEDS[(feed_index + 1) % len(LIVE_NEWS_FEEDS)],
+                LIVE_NEWS_FEEDS[(feed_index + 2) % len(LIVE_NEWS_FEEDS)],
+            ]
+            feed_index = (feed_index + 3) % len(LIVE_NEWS_FEEDS)
+
+            all_new_entries = []
+            categories_fetched = []
+            for feed in feeds_this_cycle:
+                entries = _fetch_one_feed(feed, existing_urls)
+                all_new_entries.extend(entries)
+                if entries:
+                    categories_fetched.append(feed["category"])
+                # Update existing_urls to avoid cross-feed duplicates in same cycle
+                for entry in entries:
+                    existing_urls.add(entry["url"])
+
+            if all_new_entries:
+                with open("violations.log", "a") as f:
+                    for entry in all_new_entries:
+                        f.write(json.dumps(entry) + "\n")
+                logging.info(
+                    f"ARGUS Sentry: Injected {len(all_new_entries)} items from categories: {', '.join(categories_fetched)}"
+                )
+
         except Exception as e:
             logging.error(f"Error in background news fetcher loop: {e}")
-            
-        # Poll every 30 seconds for new items
+
+        # Poll every 30 seconds
         time.sleep(30)
 
 @app.on_event("startup")
@@ -349,7 +427,7 @@ def process_news(news_text: Optional[str] = Form(None), file: Optional[UploadFil
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
         except Exception as e:
-            raise HTTPException(status_code=500, detail="Failed to save media file")
+            raise HTTPException(status_code=500, detail="Failed to save media file") from e
         finally:
             file.file.close()
             
@@ -384,7 +462,7 @@ def process_news(news_text: Optional[str] = Form(None), file: Optional[UploadFil
         )
     except Exception as e:
         print(f"Error processing news: {e}")
-        raise HTTPException(status_code=500, detail="Internal processing error")
+        raise HTTPException(status_code=500, detail="Internal processing error") from e
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
@@ -411,7 +489,7 @@ def fingerprint_asset(video_id: str = Form(...), file: UploadFile = File(...)):
         )
     except Exception as e:
         print(f"Error fingerprinting video: {e}")
-        raise HTTPException(status_code=500, detail="Internal indexing error")
+        raise HTTPException(status_code=500, detail="Internal indexing error") from e
     finally:
         file.file.close()
         if os.path.exists(temp_path):

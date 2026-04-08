@@ -6,17 +6,50 @@ import { ShieldAlert, Video, Activity, Gavel, CheckCircle2, AlertTriangle, Eye, 
 import { generateTakedown, analyzeNewsAction, uploadFingerprintAction, getFingerprintsAction, getTakedownQueueAction, addTakedownQueueAction, deleteTakedownQueueAction, getAgentLogsAction, getLiveFeedAction, dismissViolationAction } from './actions';
 
 export default function SOCDashboard() {
-  const [selectedViolation, setSelectedViolation] = useState<any | null>(null);
+  const [selectedViolation, setSelectedViolation] = useState<Record<string, unknown> | null>(null);
   const [takedownDraft, setTakedownDraft] = useState<string | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
   const [timeStr, setTimeStr] = useState('');
-  const [activeTab, setActiveTab] = useState('feed');
+  const [activeTab, setActiveTabState] = useState('feed');
 
   useEffect(() => {
-    setTimeStr(new Date().toLocaleTimeString());
-    const t = setInterval(() => setTimeStr(new Date().toLocaleTimeString()), 1000);
+    // Sync tab with URL on mount (defer to avoid sync setState warning)
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && tab !== 'feed') setActiveTabState(tab);
+    }, 0);
+
+    const handlePopState = () => {
+      const p = new URLSearchParams(window.location.search);
+      setActiveTabState(p.get('tab') || 'feed');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    window.history.pushState({}, '', `?tab=${tab}`);
+  };
+
+  useEffect(() => {
+    const updateTime = () => setTimeStr(new Date().toLocaleTimeString());
+    updateTime();
+    const t = setInterval(updateTime, 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Dynamic data synced with Sentry + Validator pipeline from backend
+  const [violations, setViolations] = useState<Record<string, unknown>[]>([]);
+  // Asset Fingerprints State
+  const [indexedAssets, setIndexedAssets] = useState<{id: string, name: string, count?: number}[]>([]);
+  const [agentLogs, setAgentLogs] = useState<string>("");
+  // Takedown Queue State
+  const [takedownQueue, setTakedownQueue] = useState<{id: string, notice: string, violation: Record<string, unknown>}[]>([]);
 
   useEffect(() => {
     if (activeTab === 'queue') {
@@ -36,7 +69,6 @@ export default function SOCDashboard() {
     }
   }, [activeTab]);
 
-  const [agentLogs, setAgentLogs] = useState<string>("");
   const logsEndRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +81,6 @@ export default function SOCDashboard() {
   const [fingerprintFile, setFingerprintFile] = useState<File | null>(null);
   const [fingerprintVideoId, setFingerprintVideoId] = useState("");
   const [isUploadingAsset, setIsUploadingAsset] = useState(false);
-  const [indexedAssets, setIndexedAssets] = useState<{id: string, name: string, count?: number}[]>([]);
 
   const handleFingerprintFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,8 +105,6 @@ export default function SOCDashboard() {
     setIsUploadingAsset(false);
   };
 
-  // Takedown Queue State
-  const [takedownQueue, setTakedownQueue] = useState<{id: string, notice: string, violation: any}[]>([]);
 
   const handleTransmitToISP = async (id: string) => {
     await deleteTakedownQueueAction(id);
@@ -117,8 +146,6 @@ export default function SOCDashboard() {
     setIsScanningNews(false);
   };
 
-  // Dynamic data synced with Sentry + Validator pipeline from backend
-  const [violations, setViolations] = useState<any[]>([]);
 
   const handleDismiss = async (id: string) => {
     setViolations(prev => prev.filter(v => v.id !== id));
@@ -128,18 +155,18 @@ export default function SOCDashboard() {
   const handleSendNotice = async () => {
     if (selectedViolation && takedownDraft) {
       const newItem = {
-         id: selectedViolation.id,
+         id: selectedViolation.id as string,
          notice: takedownDraft,
          violation: selectedViolation
       };
       await addTakedownQueueAction(newItem);
       setTakedownQueue(prev => [newItem, ...prev]);
-      handleDismiss(selectedViolation.id);
+      handleDismiss(selectedViolation.id as string);
     }
     closeTakedownDraft();
   };
 
-  const handleGenerateTakedown = async (violation: any) => {
+  const handleGenerateTakedown = async (violation: Record<string, unknown>) => {
     setIsDrafting(true);
     const res = await generateTakedown(violation);
     setTakedownDraft(res.text ?? null);
@@ -166,11 +193,11 @@ export default function SOCDashboard() {
         </div>
         
         <nav className="flex-1 px-3 py-6 space-y-1">
-          <SidebarItem active={activeTab === 'feed'} onClick={() => setActiveTab('feed')} icon={<Activity className="w-4 h-4" />}>Live Feed</SidebarItem>
-          <SidebarItem active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<FileText className="w-4 h-4" />}>News Scanner</SidebarItem>
-          <SidebarItem active={activeTab === 'fingerprints'} onClick={() => setActiveTab('fingerprints')} icon={<Video className="w-4 h-4" />}>Asset Fingerprints</SidebarItem>
-          <SidebarItem active={activeTab === 'queue'} onClick={() => setActiveTab('queue')} icon={<ShieldAlert className="w-4 h-4" />}>Takedown Queue</SidebarItem>
-          <SidebarItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal className="w-4 h-4" />}>Agent Logs</SidebarItem>
+          <SidebarItem href="?tab=feed" active={activeTab === 'feed'} onClick={(e) => { e.preventDefault(); setActiveTab('feed'); }} icon={<Activity className="w-4 h-4" />}>Live Feed</SidebarItem>
+          <SidebarItem href="?tab=news" active={activeTab === 'news'} onClick={(e) => { e.preventDefault(); setActiveTab('news'); }} icon={<FileText className="w-4 h-4" />}>News Scanner</SidebarItem>
+          <SidebarItem href="?tab=fingerprints" active={activeTab === 'fingerprints'} onClick={(e) => { e.preventDefault(); setActiveTab('fingerprints'); }} icon={<Video className="w-4 h-4" />}>Asset Fingerprints</SidebarItem>
+          <SidebarItem href="?tab=queue" active={activeTab === 'queue'} onClick={(e) => { e.preventDefault(); setActiveTab('queue'); }} icon={<ShieldAlert className="w-4 h-4" />}>Takedown Queue</SidebarItem>
+          <SidebarItem href="?tab=logs" active={activeTab === 'logs'} onClick={(e) => { e.preventDefault(); setActiveTab('logs'); }} icon={<Terminal className="w-4 h-4" />}>Agent Logs</SidebarItem>
         </nav>
         
         <div className="p-4 m-4 rounded-xl bg-gradient-to-br from-blue-900/20 to-slate-900 border border-blue-500/20">
@@ -216,7 +243,7 @@ export default function SOCDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  key={v.id} 
+                  key={`${v.id}-${idx}`} 
                   className="bg-[#0a0a0a] border border-slate-800/60 hover:border-slate-700 rounded-xl overflow-hidden transition-colors shadow-none hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]"
                 >
                   {/* Header */}
@@ -224,15 +251,15 @@ export default function SOCDashboard() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle className="w-4 h-4 text-red-400" />
-                        <h3 className="text-sm font-bold text-slate-200">Match Detected: {v.id}</h3>
+                        <h3 className="text-sm font-bold text-slate-200">Match Detected: {v.id as string}</h3>
                       </div>
-                      <p className="text-xs text-slate-500 font-mono">{v.url}</p>
+                      <p className="text-xs text-slate-500 font-mono">{v.url as string}</p>
                     </div>
                     
                     <div className="flex flex-col items-end">
-                      <span className="text-xs text-slate-400 mb-1">{v.timestamp}</span>
+                      <span className="text-xs text-slate-400 mb-1">{v.timestamp as string}</span>
                       <span className="px-2 py-1 rounded text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
-                        {v.match_score}% Confidence
+                        {v.match_score as number}% Confidence
                       </span>
                     </div>
                   </div>
@@ -245,10 +272,10 @@ export default function SOCDashboard() {
                         <span className="text-xs font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Authorized Vault
                         </span>
-                        <span className="text-xs font-mono text-slate-400">{v.official_asset}</span>
+                        <span className="text-xs font-mono text-slate-400">{v.official_asset as string}</span>
                       </div>
                       <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-800 relative group">
-                        <img src={v.official_thumb} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="Official Frame" />
+                        <img src={v.official_thumb as string} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="Official Frame" />
                         <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-lg" />
                       </div>
                     </div>
@@ -264,10 +291,10 @@ export default function SOCDashboard() {
                         <span className="text-xs font-medium uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                           <Eye className="w-3.5 h-3.5 text-red-400" /> Suspect Stream
                         </span>
-                        <span className="text-xs font-mono text-slate-400 truncate max-w-[120px]">{v.channel}</span>
+                        <span className="text-xs font-mono text-slate-400 truncate max-w-[120px]">{v.channel as string}</span>
                       </div>
                       <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden border border-red-500/20 relative group">
-                        <img src={v.pirated_thumb} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity filter sepia-[0.2] contrast-125" alt="Pirated Frame" />
+                        <img src={v.pirated_thumb as string} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity filter sepia-[0.2] contrast-125" alt="Pirated Frame" />
                         <div className="absolute inset-0 ring-1 ring-inset ring-red-500/20 rounded-lg" />
                         
                         {/* Fingerprint Match Overlay */}
@@ -281,7 +308,7 @@ export default function SOCDashboard() {
                   {/* Actions */}
                   <div className="px-6 py-4 border-t border-slate-800/60 bg-[#080808] flex justify-end gap-3 z-20 relative">
                     <button 
-                      onClick={() => handleDismiss(v.id)}
+                      onClick={() => handleDismiss(v.id as string)}
                       className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
                     >
                       Dismiss
@@ -490,13 +517,13 @@ export default function SOCDashboard() {
                   </div>
                 ) : (
                   <div className="p-6 space-y-4">
-                    {takedownQueue.map((item) => (
-                      <div key={item.id} className="bg-[#050505] border border-slate-800 rounded-lg p-5 group flex flex-col md:flex-row gap-6">
+                    {takedownQueue.map((item, idx) => (
+                      <div key={`${item.id}-${idx}`} className="bg-[#050505] border border-slate-800 rounded-lg p-5 group flex flex-col md:flex-row gap-6">
                         <div className="flex-1 space-y-3">
                            <div className="flex items-start justify-between">
                              <div>
                                <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Target Instance</span>
-                               <p className="text-sm font-bold text-red-400">{item.id} — {item.violation.channel}</p>
+                               <p className="text-sm font-bold text-red-400">{item.id} — {item.violation.channel as string}</p>
                              </div>
                              <span className="text-xs font-mono text-slate-400 bg-slate-800/50 px-2 py-1 rounded">DRAFTED</span>
                            </div>
@@ -621,11 +648,11 @@ export default function SOCDashboard() {
   );
 }
 
-function SidebarItem({ children, icon, active, onClick }: { children: React.ReactNode; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
+function SidebarItem({ children, icon, active, href, onClick }: { children: React.ReactNode; icon: React.ReactNode; active?: boolean; href?: string; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${active ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
+    <a href={href} onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${active ? 'bg-blue-600/10 text-blue-400 font-medium border border-blue-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
       <span className={active ? "text-blue-400" : "text-slate-500"}>{icon}</span>
       {children}
-    </button>
+    </a>
   );
 }

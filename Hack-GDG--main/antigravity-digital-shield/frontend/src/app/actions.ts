@@ -3,7 +3,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 // Initialize SDK. It will pick up process.env.GEMINI_API_KEY if available.
-export async function generateTakedown(metadata: any) {
+export async function generateTakedown(metadata: Record<string, unknown>) {
   try {
     // We instantiate lightly so missing API keys just drop to catch block mock.
     const ai = new GoogleGenAI({});
@@ -129,7 +129,7 @@ export async function getTakedownQueueAction() {
   }
 }
 
-export async function addTakedownQueueAction(item: {id: string, notice: string, violation: any}) {
+export async function addTakedownQueueAction(item: {id: string, notice: string, violation: Record<string, unknown>}) {
   try {
     const res = await fetch('http://127.0.0.1:8000/takedown-queue', {
       method: 'POST',

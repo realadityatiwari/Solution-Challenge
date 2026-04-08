@@ -25,3 +25,70 @@
 2026-03-30 21:06:37,851 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
 2026-03-30 21:35:02,872 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
 2026-03-30 21:35:03,533 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:38:37,076 [INFO] Analyzing news snippet (text len: 45, media: None)
+2026-03-30 21:38:37,080 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 21:38:45,977 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-30 21:39:08,687 [INFO] Analyzing news snippet (text len: 41, media: None)
+2026-03-30 21:39:08,688 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 21:39:09,353 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 403 Forbidden"
+2026-03-30 21:39:09,357 [ERROR] Failed to analyze news data: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+2026-03-30 21:39:46,311 [INFO] Analyzing news snippet (text len: 41, media: None)
+2026-03-30 21:39:46,312 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 21:39:46,938 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 403 Forbidden"
+2026-03-30 21:39:46,939 [ERROR] Failed to analyze news data: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+2026-03-30 21:40:06,627 [INFO] Analyzing news snippet (text len: 13, media: None)
+2026-03-30 21:40:06,628 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 21:40:07,272 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 403 Forbidden"
+2026-03-30 21:40:07,275 [ERROR] Failed to analyze news data: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+2026-03-30 21:40:18,827 [INFO] Analyzing news snippet (text len: 17, media: None)
+2026-03-30 21:40:18,827 [INFO] AFC is enabled with max remote calls: 10.
+2026-03-30 21:40:19,552 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 403 Forbidden"
+2026-03-30 21:40:19,554 [ERROR] Failed to analyze news data: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+2026-03-30 21:53:20,683 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 21:53:21,055 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 22:29:52,792 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 22:29:53,161 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:09:27,367 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:09:27,755 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:32:49,804 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:32:50,231 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:42:59,623 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-30 23:43:00,012 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-31 00:07:17,255 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-31 00:07:17,635 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-31 00:17:28,841 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-31 00:17:29,226 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-03-31 00:29:41,189 [INFO] Sentry Agent: Dynamically injected 2 new real-world alerts into the Live Feed.
+2026-03-31 00:29:41,611 [INFO] Sentry Agent: Dynamically injected 2 new real-world alerts into the Live Feed.
+2026-04-08 19:45:21,148 [INFO] Started background live news fetching persistent agent.
+2026-04-08 19:45:29,211 [INFO] Sentry Agent: Dynamically injected 3 new real-world alerts into the Live Feed.
+2026-04-08 19:51:36,882 [INFO] Sentry Agent: Dynamically injected 2 new real-world alerts into the Live Feed.
+2026-04-08 19:59:45,770 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 20:15:43,534 [INFO] Started background live news fetching persistent agent.
+2026-04-08 20:15:51,163 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 20:19:55,593 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 20:24:00,964 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 20:34:10,357 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 21:41:20,369 [INFO] Started background live news fetching persistent agent.
+2026-04-08 21:41:28,087 [INFO] Sentry Agent: Dynamically injected 2 new real-world alerts into the Live Feed.
+2026-04-08 21:49:35,818 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 21:53:19,703 [INFO] Analyzing news snippet (text len: 140, media: None)
+2026-04-08 21:53:19,730 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-08 21:53:21,204 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-08 21:53:21,218 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-08 22:05:50,392 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 22:07:18,414 [ERROR] Error in background news fetcher loop: [WinError 10053] An established connection was aborted by the software in your host machine
+2026-04-08 22:21:35,965 [INFO] Sentry Agent: Dynamically injected 1 new real-world alerts into the Live Feed.
+2026-04-08 22:46:15,774 [INFO] Started background live news fetching persistent agent.
+2026-04-08 22:46:23,485 [INFO] Sentry Agent: Dynamically injected 2 new real-world alerts into the Live Feed.
+2026-04-08 22:55:49,507 [INFO] Analyzing news snippet (text len: 22, media: None)
+2026-04-08 22:55:49,508 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-08 22:55:52,477 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-08 22:55:52,478 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-08 22:56:27,040 [INFO] Analyzing news snippet (text len: 23, media: None)
+2026-04-08 22:56:27,041 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-08 22:56:29,422 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-08 22:56:29,423 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-08 23:01:06,587 [INFO] Started background live news fetching persistent agent.
+2026-04-08 23:02:19,518 [INFO] Started background live news fetching persistent agent.
+2026-04-08 23:03:11,188 [INFO] Started background live news fetching persistent agent.

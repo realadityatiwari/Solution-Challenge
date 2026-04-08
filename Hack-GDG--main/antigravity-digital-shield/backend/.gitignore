@@ -1,0 +1,17 @@
+# Environments
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Project specifics
+violations.log
+agent.log
+queue_db.json
+dismissed_db.json

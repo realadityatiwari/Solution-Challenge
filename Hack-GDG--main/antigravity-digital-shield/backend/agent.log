@@ -92,3 +92,9 @@
 2026-04-08 23:01:06,587 [INFO] Started background live news fetching persistent agent.
 2026-04-08 23:02:19,518 [INFO] Started background live news fetching persistent agent.
 2026-04-08 23:03:11,188 [INFO] Started background live news fetching persistent agent.
+2026-04-08 23:16:47,825 [INFO] Started background live news fetching persistent agent.
+2026-04-08 23:17:17,972 [INFO] Analyzing news snippet (text len: 16, media: None)
+2026-04-08 23:17:17,973 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-08 23:17:19,861 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-08 23:17:19,880 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-08 23:31:59,796 [INFO] Started background live news fetching persistent agent.

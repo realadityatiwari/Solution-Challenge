@@ -136,7 +136,40 @@ def detect_category_hint(news_text: str) -> str:
         "War & Conflict": ["war", "military", "soldiers", "nato", "bomb", "attack", "killed", "ceasefire", "troops", "invasion", "conflict", "ukraine", "gaza"],
         "Entertainment & Celebrity": ["celebrity", "actor", "singer", "movie", "oscar", "grammy", "album", "film", "star", "hollywood", "taylor", "beyonce"],
         "Technology & AI": ["ai", "artificial intelligence", "chip", "apple", "google", "microsoft", "software", "algorithm", "robot", "tech", "startup"],
-        "Sports": ["match", "game", "nba", "nfl", "soccer", "football", "basketball", "championship", "player", "coach", "league", "fifa", "olympic"],
+        "Sports": [
+            # General sports terms
+            "match", "game", "nba", "nfl", "soccer", "football", "basketball",
+            "championship", "player", "coach", "league", "fifa", "olympic",
+            # Cricket & IPL specific
+            "cricket", "ipl", "bcci", "icc", "wicket", "batsman", "bowler",
+            "test match", "odi", "t20", "world cup", "msd", "dhoni", "kohli",
+            "tendulkar", "sachin", "rohit", "hardik", "pandya", "pant",
+            "csk", "rcb", "mi", "kkr", "srh", "dc", "gt", "lsg", "punjab",
+            # Football / Soccer
+            "premier league", "champions league", "transfer", "messi", "ronaldo",
+            "neymar", "haaland", "mbappe", "guardiola", "referee", "pgmol",
+            "al-nassr", "al hilal", "manchester", "arsenal", "chelsea", "psg",
+            # Tennis & Racquet sports
+            "djokovic", "federer", "nadal", "wimbledon", "grand slam", "atp",
+            "wta", "tennis", "badminton", "sindhu",
+            # Athletics & Olympics
+            "javelin", "sprint", "marathon", "bolt", "neeraj", "chopra",
+            "olympics", "gold medal", "silver medal", "bronze medal",
+            "paris 2024", "tokyo 2020", "beijing", "world athletics",
+            # Anti-doping
+            "doping", "wada", "nada", "steroids", "epo", "banned substance",
+            "drug test", "anti-doping", "cas", "tribunal", "suspension",
+            # Match-fixing & betting
+            "match fix", "spot fix", "toss fix", "bookie", "betting",
+            "fixed result", "guaranteed win", "telegram tips", "insider tips",
+            "acu", "anti-corruption",
+            # Retirement & transfers
+            "retirement", "retire", "transfer fee", "contract signed", "done deal",
+            "here we go", "pre-contract", "release clause",
+            # Records & stats
+            "world record", "all-time", "most runs", "highest scorer",
+            "career average", "stats", "goat",
+        ],
         "Crime & Conspiracy": ["illuminati", "conspiracy", "secret", "cover-up", "elite", "globalist", "nwo", "arrested", "murder", "trafficking"],
         "Natural Disasters": ["earthquake", "tsunami", "hurricane", "flood", "tornado", "wildfire", "eruption", "disaster", "magnitude", "usgs"],
         "Religion & Culture": ["god", "allah", "church", "mosque", "bible", "quran", "pope", "religious", "faith", "prophet", "temple"],

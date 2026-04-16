@@ -136,3 +136,155 @@ AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
 2026-04-13 00:24:03,226 [INFO] Started background live news fetching persistent agent.
 2026-04-16 20:12:55,387 [INFO] SQLite DB initialised at shield.db
 2026-04-16 20:12:55,390 [INFO] Started background live news fetching persistent agent.
+2026-04-16 20:44:23,615 [INFO] SQLite DB initialised at shield.db
+2026-04-16 20:44:23,619 [INFO] Started background live news fetching persistent agent.
+2026-04-16 20:45:53,667 [INFO] Analyzing news snippet (text len: 27, media: None)
+2026-04-16 20:45:53,679 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-16 20:45:55,748 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-16 20:45:55,755 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-16 20:50:47,499 [INFO] SQLite DB initialised at shield.db
+2026-04-16 20:50:47,501 [INFO] Started background live news fetching persistent agent.
+2026-04-16 20:51:17,962 [INFO] Analyzing news snippet (text len: 19, media: None)
+2026-04-16 20:51:17,964 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-16 20:51:19,667 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-16 20:51:19,670 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-16 21:12:48,820 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-16 21:12:48,822 [INFO] Started background live news fetching persistent agent.
+2026-04-16 21:55:49,596 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-16 21:55:49,598 [INFO] Started background live news fetching persistent agent.
+2026-04-16 21:57:05,930 [INFO] Analyzing news snippet (text len: 107, media: None)
+2026-04-16 21:57:05,938 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-16 21:57:09,219 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-16 21:57:09,224 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-16 22:01:26,183 [INFO] Analyzing news snippet (text len: 107, media: temp_news_d48536ae-13a1-42ad-a103-b9632a76ab15_sample1.png)
+2026-04-16 22:01:27,237 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/upload/v1beta/files "HTTP/1.1 200 OK"
+2026-04-16 22:01:35,207 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/upload/v1beta/files?upload_id=AMNfjG3B4OMiponjp7dYNsrY1FUXa16EyGUoMkIw49FhRWPQTjphPus923nhUJjSQRc4QZ4lpgXy81NKK0mUqEPOA-RwzrqRzfPf4FDKaZ0oPA&upload_protocol=resumable "HTTP/1.1 200 OK"
+2026-04-16 22:01:35,212 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-16 22:01:39,840 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-16 22:01:39,842 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-16 22:01:41,802 [INFO] HTTP Request: DELETE https://generativelanguage.googleapis.com/v1beta/files/25s1eme8p4k3 "HTTP/1.1 200 OK"
+2026-04-16 23:39:37,935 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-16 23:43:02,918 [INFO] ARGUS Sentry: Injected 6 items from categories: World News, World News, Politics & Elections
+2026-04-16 23:56:37,144 [INFO] Analyzing news snippet (text len: 132, media: None)
+2026-04-16 23:56:37,150 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-16 23:56:47,667 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-16 23:56:47,678 [INFO] Raw Gemini response: {
+  "authenticity_score": 50,
+  "verdict": "uncertain",
+  "reasoning": "The statement reports an unconfirmed visual sighting of an unidentified flying object (UFO) and explicitly notes the absence of corroborating radar data from authorities. An 'unidentified flying object' by definition means something was observed that could not be identified, which is a common occurrence (e.g., misidentified aircraft, balloons, atmospheric phenomena). The lack of official confirmation via radar anomalies means there is no external, objective evidence to support the claim of a significant or unusual aerial event. However, without specific details about the observation itself (e.g., witness accounts, precise time, location, visual characteristics), it is impossible to verify if a credible visual observation took place or to determine the nature of what was seen. The statement itself is a report of an unconfirmed event, not necessarily a fabricated claim, but its veracity cannot be established due to insufficient verifiable information.",
+  "confidence": "medium"
+}
+2026-04-16 23:56:47,680 [INFO] Parsed JSON: {"authenticity_score": 50, "verdict": "uncertain", "reasoning": "The statement reports an unconfirmed visual sighting of an unidentified flying object (UFO) and explicitly notes the absence of corroborating radar data from authorities. An 'unidentified flying object' by definition means something was observed that could not be identified, which is a common occurrence (e.g., misidentified aircraft, balloons, atmospheric phenomena). The lack of official confirmation via radar anomalies means there is no external, objective evidence to support the claim of a significant or unusual aerial event. However, without specific details about the observation itself (e.g., witness accounts, precise time, location, visual characteristics), it is impossible to verify if a credible visual observation took place or to determine the nature of what was seen. The statement itself is a report of an unconfirmed event, not necessarily a fabricated claim, but its veracity cannot be established due to insufficient verifiable information.", "confidence": "medium"}
+2026-04-16 23:56:47,680 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-17 00:09:14,666 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-17 00:09:14,667 [INFO] Started background live news fetching persistent agent.
+2026-04-17 00:09:23,301 [INFO] ARGUS Sentry: Injected 1 items from categories: Politics & Elections
+2026-04-17 00:09:59,395 [INFO] ARGUS Sentry: Injected 5 items from categories: Health & Medicine, Health & Medicine, Science & Climate
+2026-04-17 00:10:36,616 [INFO] ARGUS Sentry: Injected 6 items from categories: Science & Climate, Technology & AI, Finance & Cryptocurrency
+2026-04-17 00:11:14,678 [INFO] ARGUS Sentry: Injected 6 items from categories: Finance & Cryptocurrency, Sports, Sports
+2026-04-17 00:11:23,670 [INFO] Analyzing news snippet (text len: 132, media: None)
+2026-04-17 00:11:23,672 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:11:29,010 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:11:29,013 [INFO] Raw Gemini response: {
+  "authenticity_score": 45,
+  "verdict": "uncertain",
+  "reasoning": "The statement describes an unconfirmed visual sighting of an 'unidentified flying object.' The critical piece of information is that 'no authorities have confirmed any radar anomalies.' While a visual sighting could occur without radar detection (e.g., small object, specific atmospheric conditions, or misidentification), the lack of official corroboration significantly reduces the claim's verifiable authenticity. Without specific details such as witness accounts, photographic/video evidence, or precise time and location, the claim remains anecdotal and unverified. Many 'UFO' sightings are later identified as conventional aircraft, satellites, drones, or atmospheric phenomena. Therefore, the claim cannot be confirmed as true or false based on the provided limited information.",
+  "confidence": "medium"
+}
+2026-04-17 00:11:29,013 [INFO] Parsed JSON: {"authenticity_score": 45, "verdict": "uncertain", "reasoning": "The statement describes an unconfirmed visual sighting of an 'unidentified flying object.' The critical piece of information is that 'no authorities have confirmed any radar anomalies.' While a visual sighting could occur without radar detection (e.g., small object, specific atmospheric conditions, or misidentification), the lack of official corroboration significantly reduces the claim's verifiable authenticity. Without specific details such as witness accounts, photographic/video evidence, or precise time and location, the claim remains anecdotal and unverified. Many 'UFO' sightings are later identified as conventional aircraft, satellites, drones, or atmospheric phenomena. Therefore, the claim cannot be confirmed as true or false based on the provided limited information.", "confidence": "medium"}
+2026-04-17 00:11:29,013 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 45.00
+2026-04-17 00:11:52,907 [INFO] ARGUS Sentry: Injected 6 items from categories: Entertainment & Celebrity, War & Conflict, Science & Climate
+2026-04-17 00:12:04,818 [INFO] Analyzing news snippet (text len: 132, media: None)
+2026-04-17 00:12:04,819 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:12:09,986 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:12:10,176 [INFO] Raw Gemini response: {
+  "authenticity_score": 40,
+  "verdict": "uncertain",
+  "reasoning": "The claim states an 'unidentified flying object was observed,' which is an anecdotal report without specific details such as the observer's identity, precise location, time, or any accompanying visual evidence. The crucial piece of information is that 'no authorities have confirmed any radar anomalies.' This lack of official corroboration from radar data, which would typically accompany a significant aerial event, significantly undermines the verifiability of the sighting. While an individual may genuinely believe they saw something, without independent verification or concrete evidence, the claim remains unsubstantiated. This falls under the category of unverified anecdotal claims, often associated with conspiracy theories or simple misidentification, due to the lack of official confirmation.",
+  "confidence": "high"
+}
+2026-04-17 00:12:10,176 [INFO] Parsed JSON: {"authenticity_score": 40, "verdict": "uncertain", "reasoning": "The claim states an 'unidentified flying object was observed,' which is an anecdotal report without specific details such as the observer's identity, precise location, time, or any accompanying visual evidence. The crucial piece of information is that 'no authorities have confirmed any radar anomalies.' This lack of official corroboration from radar data, which would typically accompany a significant aerial event, significantly undermines the verifiability of the sighting. While an individual may genuinely believe they saw something, without independent verification or concrete evidence, the claim remains unsubstantiated. This falls under the category of unverified anecdotal claims, often associated with conspiracy theories or simple misidentification, due to the lack of official confirmation.", "confidence": "high"}
+2026-04-17 00:12:10,176 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 40.00
+2026-04-17 00:12:28,314 [INFO] ARGUS Sentry: Injected 2 items from categories: Social Media Viral Content
+2026-04-17 00:12:31,365 [INFO] Analyzing news snippet (text len: 132, media: None)
+2026-04-17 00:12:31,366 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:12:36,753 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:12:36,755 [INFO] Raw Gemini response: {
+  "authenticity_score": 50,
+  "verdict": "uncertain",
+  "reasoning": "The claim states an 'unidentified flying object was observed,' which by definition means its nature is unknown. However, the crucial detail is that 'no authorities have confirmed any radar anomalies.' For a significant object to be observed over the Pacific Ocean, especially one that might be considered a 'UFO' in the popular sense, a lack of radar confirmation from authorities (military, air traffic control) significantly undermines the credibility of a major event. Without details on who observed it, when, where, or any corroborating evidence (photos, videos, multiple independent witnesses), the claim remains unsubstantiated. It is impossible to verify or falsify without further information, placing it firmly in the 'uncertain' category.",
+  "confidence": "high"
+}
+2026-04-17 00:12:36,781 [INFO] Parsed JSON: {"authenticity_score": 50, "verdict": "uncertain", "reasoning": "The claim states an 'unidentified flying object was observed,' which by definition means its nature is unknown. However, the crucial detail is that 'no authorities have confirmed any radar anomalies.' For a significant object to be observed over the Pacific Ocean, especially one that might be considered a 'UFO' in the popular sense, a lack of radar confirmation from authorities (military, air traffic control) significantly undermines the credibility of a major event. Without details on who observed it, when, where, or any corroborating evidence (photos, videos, multiple independent witnesses), the claim remains unsubstantiated. It is impossible to verify or falsify without further information, placing it firmly in the 'uncertain' category.", "confidence": "high"}
+2026-04-17 00:12:36,781 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-17 00:13:02,281 [INFO] ARGUS Sentry: Injected 2 items from categories: Politics & Elections, Health & Medicine
+2026-04-17 00:14:08,991 [INFO] ARGUS Sentry: Injected 1 items from categories: Finance & Cryptocurrency
+2026-04-17 00:15:15,698 [INFO] ARGUS Sentry: Injected 1 items from categories: Social Media Viral Content
+2026-04-17 00:17:26,897 [INFO] ARGUS Sentry: Injected 1 items from categories: Sports
+2026-04-17 00:19:39,677 [INFO] ARGUS Sentry: Injected 2 items from categories: Technology & AI, Finance & Cryptocurrency
+2026-04-17 00:20:46,126 [INFO] ARGUS Sentry: Injected 1 items from categories: Entertainment & Celebrity
+2026-04-17 00:21:20,427 [INFO] ARGUS Sentry: Injected 2 items from categories: World News
+2026-04-17 00:25:43,649 [INFO] ARGUS Sentry: Injected 1 items from categories: Finance & Cryptocurrency
+2026-04-17 00:26:19,663 [INFO] Analyzing news snippet (text len: 22, media: None)
+2026-04-17 00:26:19,666 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:26:22,849 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-17 00:26:22,851 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-04-17 00:26:42,322 [INFO] Analyzing news snippet (text len: 27, media: None)
+2026-04-17 00:26:42,323 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:26:46,814 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:26:46,818 [INFO] Raw Gemini response: {
+  "authenticity_score": 100,
+  "verdict": "true",
+  "reasoning": "Tom Holland is a widely recognized actor who has portrayed the character Spider-Man in the Marvel Cinematic Universe since 2016, beginning with 'Captain America: Civil War' and continuing through multiple standalone films and Avengers crossovers. This is a well-established and easily verifiable fact through numerous reputable entertainment news sources, official movie databases (e.g., IMDb, Rotten Tomatoes), and the films themselves.",
+  "confidence": "high"
+}
+2026-04-17 00:26:46,820 [INFO] Parsed JSON: {"authenticity_score": 100, "verdict": "true", "reasoning": "Tom Holland is a widely recognized actor who has portrayed the character Spider-Man in the Marvel Cinematic Universe since 2016, beginning with 'Captain America: Civil War' and continuing through multiple standalone films and Avengers crossovers. This is a well-established and easily verifiable fact through numerous reputable entertainment news sources, official movie databases (e.g., IMDb, Rotten Tomatoes), and the films themselves.", "confidence": "high"}
+2026-04-17 00:26:46,821 [INFO] ARGUS Analysis Complete — Verdict: true | Score: 100.00
+2026-04-17 00:26:59,071 [INFO] Analyzing news snippet (text len: 31, media: None)
+2026-04-17 00:26:59,072 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:27:03,041 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:27:03,043 [INFO] Raw Gemini response: {
+  "authenticity_score": 1,
+  "verdict": "false",
+  "reasoning": "Tom Holland is widely known and officially cast as the actor portraying Spider-Man in the Marvel Cinematic Universe (MCU) films, a role he has held since 2016. This is a well-established fact in popular culture and entertainment news.",
+  "confidence": "high"
+}
+2026-04-17 00:27:03,043 [INFO] Parsed JSON: {"authenticity_score": 1, "verdict": "false", "reasoning": "Tom Holland is widely known and officially cast as the actor portraying Spider-Man in the Marvel Cinematic Universe (MCU) films, a role he has held since 2016. This is a well-established fact in popular culture and entertainment news.", "confidence": "high"}
+2026-04-17 00:27:03,043 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-17 00:27:15,255 [INFO] Analyzing news snippet (text len: 31, media: None)
+2026-04-17 00:27:15,255 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:27:19,410 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:27:19,413 [INFO] Raw Gemini response: {
+  "authenticity_score": 5,
+  "verdict": "false",
+  "reasoning": "The statement 'Tom Holland is not Spider-Man' is false. Tom Holland is widely known and officially recognized as the actor who portrays the character Spider-Man in the Marvel Cinematic Universe films, including 'Spider-Man: Homecoming', 'Spider-Man: Far From Home', and 'Spider-Man: No Way Home', among others. This is a well-established fact in popular culture and entertainment news, confirmed by Marvel Studios and numerous media outlets.",
+  "confidence": "high"
+}
+2026-04-17 00:27:19,413 [INFO] Parsed JSON: {"authenticity_score": 5, "verdict": "false", "reasoning": "The statement 'Tom Holland is not Spider-Man' is false. Tom Holland is widely known and officially recognized as the actor who portrays the character Spider-Man in the Marvel Cinematic Universe films, including 'Spider-Man: Homecoming', 'Spider-Man: Far From Home', and 'Spider-Man: No Way Home', among others. This is a well-established fact in popular culture and entertainment news, confirmed by Marvel Studios and numerous media outlets.", "confidence": "high"}
+2026-04-17 00:27:19,413 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-17 00:28:10,933 [INFO] Analyzing news snippet (text len: 16, media: None)
+2026-04-17 00:28:10,934 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:28:16,182 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:28:16,184 [INFO] Raw Gemini response: {
+  "authenticity_score": 95,
+  "verdict": "true",
+  "reasoning": "The statement 'Iron Man is dead' is largely true within the context of the Marvel Cinematic Universe (MCU), where the character Tony Stark (Iron Man) sacrifices himself in 'Avengers: Endgame'. While comic book characters often experience temporary deaths and resurrections, the MCU portrayal is the most widely recognized and definitive 'death' for the character in popular culture. The statement is a factual claim about a fictional narrative, not a piece of real-world news or misinformation.",
+  "confidence": "high"
+}
+2026-04-17 00:28:16,184 [INFO] Parsed JSON: {"authenticity_score": 95, "verdict": "true", "reasoning": "The statement 'Iron Man is dead' is largely true within the context of the Marvel Cinematic Universe (MCU), where the character Tony Stark (Iron Man) sacrifices himself in 'Avengers: Endgame'. While comic book characters often experience temporary deaths and resurrections, the MCU portrayal is the most widely recognized and definitive 'death' for the character in popular culture. The statement is a factual claim about a fictional narrative, not a piece of real-world news or misinformation.", "confidence": "high"}
+2026-04-17 00:28:16,185 [INFO] ARGUS Analysis Complete — Verdict: true | Score: 95.00
+2026-04-17 00:28:27,666 [INFO] Analyzing news snippet (text len: 17, media: None)
+2026-04-17 00:28:27,666 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-17 00:28:31,716 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-17 00:28:31,720 [INFO] Raw Gemini response: {
+  "authenticity_score": 0,
+  "verdict": "false",
+  "reasoning": "In the Marvel Cinematic Universe (MCU) canon, the character Iron Man (Tony Stark) definitively died at the conclusion of the film 'Avengers: Endgame' (2019) while wielding the Infinity Gauntlet to defeat Thanos. His death was a pivotal and permanent event within the established narrative. There has been no subsequent official MCU content (films, series, or canonical statements) that indicates he is alive. Therefore, the statement 'Iron Man is alive' is false within the context of the fictional universe it refers to.",
+  "confidence": "high"
+}
+2026-04-17 00:28:31,721 [INFO] Parsed JSON: {"authenticity_score": 0, "verdict": "false", "reasoning": "In the Marvel Cinematic Universe (MCU) canon, the character Iron Man (Tony Stark) definitively died at the conclusion of the film 'Avengers: Endgame' (2019) while wielding the Infinity Gauntlet to defeat Thanos. His death was a pivotal and permanent event within the established narrative. There has been no subsequent official MCU content (films, series, or canonical statements) that indicates he is alive. Therefore, the statement 'Iron Man is alive' is false within the context of the fictional universe it refers to.", "confidence": "high"}
+2026-04-17 00:28:31,721 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-17 00:30:06,674 [INFO] ARGUS Sentry: Injected 1 items from categories: World News
+2026-04-17 00:31:45,933 [INFO] ARGUS Sentry: Injected 1 items from categories: Finance & Cryptocurrency
+2026-04-17 00:34:34,059 [INFO] ARGUS Sentry: Injected 2 items from categories: Finance & Cryptocurrency
+2026-04-17 00:35:06,974 [INFO] ARGUS Sentry: Injected 1 items from categories: Entertainment & Celebrity

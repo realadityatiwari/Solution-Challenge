@@ -11,6 +11,7 @@ from PIL import Image
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shield.db")
 
 HAMMING_THRESHOLD = 10  # bits — frames with distance <= this are considered a match
+HASH_SIZE = 64          # bits — size of the perceptual hash (dHash)
 
 
 def _get_db():
@@ -83,7 +84,7 @@ def hamming_distance(hash_hex_a: str, hash_hex_b: str) -> int:
     try:
         return bin(int(hash_hex_a, 16) ^ int(hash_hex_b, 16)).count('1')
     except ValueError:
-        return 64  # Max distance for a 64-bit hash — treat as no match
+        return HASH_SIZE  # Max distance for a 64-bit hash — treat as no match
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -109,20 +110,20 @@ def check_similarity(new_clip_path: str) -> dict:
         return {"score": 0.0, "message": "Vault is empty — no authorized assets indexed yet."}
 
     total_frames = len(frames)
-    matched_frames = 0
+    total_similarity = 0.0
 
     for frame in frames:
         clip_hash = generate_dhash(frame)
-        # Find the minimum Hamming distance to any fingerprint in the vault
+        # Best similarity to any vault hash: (1 - distance/HASH_SIZE) * 100
         min_distance = min(hamming_distance(clip_hash, vh) for vh in vault_hashes)
-        if min_distance <= HAMMING_THRESHOLD:
-            matched_frames += 1
+        # Only count frames within HAMMING_THRESHOLD — weak matches are zeroed out
+        frame_similarity = max(0.0, (1 - min_distance / HASH_SIZE) * 100) if min_distance <= HAMMING_THRESHOLD else 0.0
+        total_similarity += frame_similarity
 
-    score_percentage = (matched_frames / total_frames) * 100.0
+    score_percentage = round(total_similarity / total_frames, 2)
     return {
         "score": score_percentage,
-        "matched_frames": matched_frames,
-        "total": total_frames,
+        "total_frames": total_frames,
     }
 
 

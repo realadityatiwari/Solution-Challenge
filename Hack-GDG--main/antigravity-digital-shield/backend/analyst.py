@@ -96,30 +96,10 @@ def analyze_video(video_path: str) -> dict[str, Any]:
 # =============================================================================
 
 class NewsViolationReport(BaseModel):
-    authenticity_verdict: str = Field(
-        description="A quick single-word/phrase summary: Verified, Mostly True, Mixed/Unverified, Mostly False, Completely Fake"
-    )
-    fake_probability: float = Field(
-        description="Decimal ranging 0.0 to 1.0 reflecting how likely the news is FAKE (1.0 = completely fake, 0.0 = completely true)"
-    )
-    category_detected: str = Field(
-        description=f"The most likely news category. Choose from: {', '.join(NEWS_CATEGORIES)}, or 'General News' if none match."
-    )
-    key_claims_analysis: list[str] = Field(
-        description="Break down the major claims made in the text and analyze the likelihood of each being true or false based on logical consistency and known facts"
-    )
-    red_flags: list[str] = Field(
-        description="Identify any sensationalism, emotional manipulation, logical fallacies, conspiracy framing, lack of verifiable sources, dangerous advice, or AI-generated media artifacts"
-    )
-    source_credibility_indicators: list[str] = Field(
-        description="List any credibility signals found (named institutions, specific numbers, named officials, cited journals) or their absence"
-    )
-    contextual_gaps: str = Field(
-        description="Point out what verifiable information is missing that would be necessary to fully authenticate the story"
-    )
-    reasoning: str = Field(
-        description="A concise expert reasoning paragraph explaining your verdict and score"
-    )
+    authenticity_score: float = Field(description="Score between 0 and 100. 0 = completely false, 50 = uncertain / insufficient evidence, 100 = verified true")
+    verdict: str = Field(description="'true', 'false', or 'uncertain'")
+    reasoning: str = Field(description="Explanation of verdict")
+    confidence: str = Field(description="'low', 'medium', or 'high'")
 
 
 def detect_category_hint(news_text: str) -> str:
@@ -261,9 +241,9 @@ def analyze_news(news_text: str = None, media_path: str = None) -> dict[str, Any
         "OUTPUT REQUIREMENTS:\n"
         "═══════════════════════════════════════════════════════════\n"
         "Provide your complete structured JSON analysis. Be precise, forensically rigorous, and evidence-based.\n"
-        "Your fake_probability score MUST be calibrated against the examples above.\n"
-        "If the content is dangerous (promotes violence, harmful health advice, financial fraud) bias toward higher scores.\n"
-        "If the content has multiple named officials, specific numbers, and institutional sources, bias toward lower scores."
+        "Your authenticity_score MUST be calibrated: 0=completely false, 50=uncertain, 100=verified true.\n"
+        "Do NOT assume false unless strong evidence.\n"
+        "Prefer 'uncertain' when information is incomplete."
     )
 
     contents = []
@@ -295,21 +275,33 @@ def analyze_news(news_text: str = None, media_path: str = None) -> dict[str, Any
 
         parsed_data = json.loads(response.text)
 
-        if "fake_probability" not in parsed_data:
-            parsed_data["fake_probability"] = 0.0
-            parsed_data["error"] = "Agent failed to provide fake_probability."
-        else:
-            parsed_data["fake_probability"] = float(parsed_data["fake_probability"])
+        logging.info("Raw Gemini response: %s", response.text)
+        logging.info("Parsed JSON: %s", json.dumps(parsed_data))
 
-        # Add the auto-detected category as a hint (Gemini may override with its own detection)
-        if "category_detected" not in parsed_data:
-            parsed_data["category_detected"] = detected_category
+        if "authenticity_score" in parsed_data:
+            score = float(parsed_data["authenticity_score"])
+            reasoning = parsed_data.get("reasoning", "")
+            reasoning_lower = reasoning.lower()
+            uncertainty_signals = [
+                "insufficient",
+                "unclear",
+                "cannot verify",
+                "no evidence",
+                "lack of evidence",
+                "not confirmed"
+            ]
+            if score < 20 and (
+                len(reasoning.strip()) < 80 or
+                not any(signal in reasoning_lower for signal in uncertainty_signals)
+            ):
+                score = 50.0
+                parsed_data["verdict"] = "uncertain"
+            parsed_data["authenticity_score"] = score
 
         logging.info(
-            "ARGUS Analysis Complete — Category: %s | Verdict: %s | Fake Prob: %.2f",
-            parsed_data.get("category_detected", "Unknown"),
-            parsed_data.get("authenticity_verdict", "Unknown"),
-            parsed_data.get("fake_probability", 0.0)
+            "ARGUS Analysis Complete — Verdict: %s | Score: %.2f",
+            parsed_data.get("verdict", "Unknown"),
+            parsed_data.get("authenticity_score", 50.0)
         )
 
         return parsed_data
@@ -317,8 +309,7 @@ def analyze_news(news_text: str = None, media_path: str = None) -> dict[str, Any
     except Exception as e:
         logging.error("Failed to analyze news data: %s", str(e))
         return {
-            "error": "ARGUS model reasoning failed or output format was invalid.",
-            "fake_probability": 0.0
+            "error": "ARGUS model reasoning failed or output format was invalid."
         }
     finally:
         if uploaded_file:

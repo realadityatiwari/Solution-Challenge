@@ -84,7 +84,14 @@ export default function SOCDashboard() {
 
   const handleFingerprintFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFingerprintFile(e.target.files[0]);
+      const file = e.target.files[0];
+      const MAX_ASSET_MB = 20;
+      if (file.size > MAX_ASSET_MB * 1024 * 1024) {
+        alert(`File is too large. Maximum allowed size is ${MAX_ASSET_MB} MB.`);
+        e.target.value = '';
+        return;
+      }
+      setFingerprintFile(file);
     }
   };
 
@@ -120,6 +127,12 @@ export default function SOCDashboard() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const MAX_NEWS_MEDIA_MB = 20;
+      if (file.size > MAX_NEWS_MEDIA_MB * 1024 * 1024) {
+        alert(`File is too large. Maximum allowed size is ${MAX_NEWS_MEDIA_MB} MB.`);
+        e.target.value = '';
+        return;
+      }
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
@@ -129,6 +142,13 @@ export default function SOCDashboard() {
     setSelectedImage(null);
     setPreviewUrl(null);
   };
+
+  // Revoke the object URL when the component unmounts to free browser memory
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleScanNews = async () => {
     if (!newsText.trim() && !selectedImage) return;
@@ -370,15 +390,18 @@ export default function SOCDashboard() {
                    </div>
                    
                    {/* Results Box */}
-                   {newsReport && (
+                   {newsReport && (() => {
+                     const score = newsReport.authenticity_score ?? 50;
+                     const isFake = score < 40;
+                     return (
                      <motion.div initial={{opacity:0, y: 10}} animate={{opacity:1, y: 0}} className="bg-[#050505] border border-slate-800/60 rounded-lg p-6">
                         <div className="flex items-center gap-4 mb-4 border-b border-slate-800/60 pb-6">
-                          <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold text-xl border ${newsReport.fake_probability > 0.6 ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
-                            <span>{Math.round((1 - newsReport.fake_probability) * 100)}%</span>
+                          <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold text-xl border ${isFake ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
+                            <span>{`${Math.round(score)}%`}</span>
                           </div>
                           <div>
                             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                              Authenticity: <span className={newsReport.fake_probability > 0.6 ? "text-red-400" : "text-green-400"}>{newsReport.authenticity_verdict ?? "Unknown"}</span>
+                              Authenticity: <span className={isFake ? "text-red-400" : "text-green-400"}>{newsReport.verdict ?? "Unknown"}</span>
                             </h4>
                             <p className="text-xs text-slate-500 mt-1">Score represents the likelihood of the information being completely <strong className="text-green-400">TRUE</strong> based on logical analysis.</p>
                           </div>
@@ -415,7 +438,7 @@ export default function SOCDashboard() {
                                 </div>
                             )}
 
-                            {newsReport.fake_probability > 0.6 && (
+                            {isFake && (
                               <div className="mt-6 flex justify-end border-t border-slate-800/60 pt-6">
                                  <button
                                    onClick={() => setActiveTab('queue')}
@@ -428,7 +451,8 @@ export default function SOCDashboard() {
                             )}
                         </div>
                      </motion.div>
-                   )}
+                     );
+                   })()}
                 </div>
               </motion.div>
             ) : activeTab === 'fingerprints' ? (

@@ -36,7 +36,7 @@ def safe_filename(filename: str | None) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 _rate_lock = threading.Lock()
 # key: "endpoint:client_ip"  →  value: deque of request timestamps (float)
-_rate_buckets: dict = collections.defaultdict(collections.deque)
+_rate_buckets: dict = collections.defaultdict(lambda: collections.deque(maxlen=50))
 
 def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> bool:
     """
@@ -132,9 +132,17 @@ def verify_api_key(api_key: str = Depends(api_key_header)):
 
 app = FastAPI(title="Antigravity Digital Shield")
 
+_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+_PRODUCTION_ORIGIN = os.environ.get("FRONTEND_ORIGIN")
+if _PRODUCTION_ORIGIN:
+    _ALLOWED_ORIGINS.append(_PRODUCTION_ORIGIN)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -144,6 +152,7 @@ class ProcessMediaResponse(BaseModel):
     message: str
     media_id: str
     match_score: float
+    detection_type: str  # "fingerprint" | "news" — tells frontend what the score represents
 
 class ProcessNewsRequest(BaseModel):
     news_text: str
@@ -164,7 +173,7 @@ import json
 # SQLite persistence — replaces queue_db.json + dismissed_db.json
 # stdlib only, no new dependencies. Thread-safe via WAL mode + atomic SQL.
 # ─────────────────────────────────────────────────────────────────────────────
-DB_PATH = "shield.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shield.db")
 
 def get_db():
     """Return a new SQLite connection with WAL mode and row factory set."""
@@ -270,9 +279,12 @@ def _fetch_one_feed(feed: dict, existing_urls: set) -> list:
 
         for item in items[:2]:  # Max 2 items per feed per cycle
             # Support both RSS and Atom
-            title_el = item.find('title') or item.find('{http://www.w3.org/2005/Atom}title')
-            link_el  = item.find('link')  or item.find('{http://www.w3.org/2005/Atom}link')
-            date_el  = item.find('pubDate') or item.find('{http://www.w3.org/2005/Atom}published')
+            t1 = item.find('title')
+            title_el = t1 if t1 is not None else item.find('{http://www.w3.org/2005/Atom}title')
+            l1 = item.find('link')
+            link_el  = l1 if l1 is not None else item.find('{http://www.w3.org/2005/Atom}link')
+            d1 = item.find('pubDate')
+            date_el  = d1 if d1 is not None else item.find('{http://www.w3.org/2005/Atom}published')
 
             title   = title_el.text if title_el is not None and title_el.text else "Unknown Title"
             link    = link_el.text if link_el is not None and link_el.text else (link_el.get("href", "") if link_el is not None else "")
@@ -282,6 +294,9 @@ def _fetch_one_feed(feed: dict, existing_urls: set) -> list:
             if "news.google.com/rss/articles" in link:
                 link = link  # Keep as is; redirect ultimately lands on real URL
 
+            if not link:
+                logging.warning("Skipped RSS item due to missing link")
+            
             if not link or link in existing_urls:
                 continue
 
@@ -289,7 +304,7 @@ def _fetch_one_feed(feed: dict, existing_urls: set) -> list:
             suspect_thumb = ""
             try:
                 art_req = urllib.request.Request(link, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(art_req, timeout=3) as art_res:
+                with urllib.request.urlopen(art_req, timeout=1) as art_res:
                     html = art_res.read(16000).decode('utf-8', errors='ignore')
                     match = re.search(r'<meta property="og:image" content="(.*?)"', html)
                     if match:
@@ -297,8 +312,8 @@ def _fetch_one_feed(feed: dict, existing_urls: set) -> list:
             except Exception:
                 pass
 
-            # Vulnerability score: reflects how "suspicious" a news item might be for demonstration
-            score = 55.0 + (len(title) % 35)
+            # RSS feed items have no vault match — score 0.0 (real score assigned by check_similarity at scan time)
+            score = 0.0
 
             entries.append({
                 "timestamp": pubDate,
@@ -331,7 +346,9 @@ def fetch_live_news_loop():
         try:
             # Load existing URLs from DB to prevent duplicates (single indexed query)
             with get_db() as con:
-                rows = con.execute("SELECT url FROM violations").fetchall()
+                rows = con.execute(
+                    "SELECT url FROM violations ORDER BY rowid DESC LIMIT 5000"
+                ).fetchall()
             existing_urls = {r["url"] for r in rows}
 
             # Pull from next 3 feeds in rotation (round-robin across all 16 feeds)
@@ -397,11 +414,9 @@ def read_root():
 @app.get("/live-feed")
 def get_live_feed():
     try:
-        dismissed = load_dismissed()          # returns a set — O(1) lookups
-        queued_ids = {q.get("id") for q in load_queue()}
-
-        # Fetch only the latest 200 rows — O(log N) via rowid index, never a full scan
         with get_db() as con:
+            dismissed = {r["id"] for r in con.execute("SELECT id FROM dismissed").fetchall()}
+            queued_ids = {r["id"] for r in con.execute("SELECT id FROM takedown_queue").fetchall()}
             rows = con.execute(
                 "SELECT id, url, title, channel, match_score, timestamp, suspect_thumb "
                 "FROM violations ORDER BY rowid DESC LIMIT 200"
@@ -434,6 +449,7 @@ def get_live_feed():
                 "channel": row["channel"],
                 "url": vid_url,
                 "match_score": row["match_score"],
+                "detection_type": "news",   # RSS feed item, no vault similarity computed
                 "timestamp": row["timestamp"],
                 "official_asset": "NBA_VAULT_DETECTED",
                 "official_thumb": official_thumb,
@@ -447,7 +463,7 @@ def get_live_feed():
         return {"status": "error", "violations": []}
 
 @app.post("/live-feed/dismiss/{item_id}")
-def dismiss_violation(item_id: str):
+def dismiss_violation(item_id: str, api_key: str = Depends(verify_api_key)):
     # INSERT OR IGNORE is atomic — no R-M-W race condition
     with get_db() as con:
         con.execute("INSERT OR IGNORE INTO dismissed (id) VALUES (?)", (item_id,))
@@ -459,7 +475,7 @@ def get_takedown_queue():
     return {"status": "success", "queue": load_queue()}
 
 @app.post("/takedown-queue")
-def add_takedown(notice: TakedownNotice):
+def add_takedown(notice: TakedownNotice, api_key: str = Depends(verify_api_key)):
     # INSERT OR IGNORE prevents duplicates atomically — no list scan required
     with get_db() as con:
         con.execute(
@@ -537,7 +553,8 @@ def process_media(request: Request, file: UploadFile = File(...), api_key: str =
         status="success",
         message="Potential infringement flagged!" if is_infringing else "Media clear.",
         media_id=media_id,
-        match_score=score
+        match_score=score,
+        detection_type="fingerprint"   # Vault-based perceptual hash similarity
     )
 
 @app.post("/process-news", response_model=ProcessNewsResponse)
@@ -548,6 +565,8 @@ def process_news(request: Request, news_text: Optional[str] = Form(None), file: 
 
     if not news_text and not file:
         raise HTTPException(status_code=400, detail="Must provide either text, a URL, or a media file (image/video).")
+    if news_text and len(news_text) > 10_000:
+        raise HTTPException(status_code=400, detail="news_text must be under 10,000 characters.")
     if file and file.content_type not in ALLOWED_MEDIA_TYPES:
         raise HTTPException(status_code=415, detail=f"Unsupported file type '{file.content_type}'. Allowed: {sorted(ALLOWED_MEDIA_TYPES)}")
 
@@ -563,11 +582,11 @@ def process_news(request: Request, news_text: Optional[str] = Form(None), file: 
         except Exception as e:
             raise HTTPException(status_code=500, detail="Failed to save media file") from e
         finally:
-            file.file.close()
+            file.file.close()  # Always close — even if _check_content_length raised 413
             
     try:
         report = analyze_news(news_text, temp_path)
-        is_fake = report.get("fake_probability", 0.0) > 0.6
+        is_fake = report.get("authenticity_score", 50.0) < 40.0
         
         if is_fake:
             # Auto-queue the fake news into the takedown queue
@@ -577,7 +596,7 @@ def process_news(request: Request, news_text: Optional[str] = Form(None), file: 
                 "channel": "Identified News Source",
                 "url": (news_text[:150] + '...') if news_text else "Attached Media File"
             }
-            draft_notice = f"To the Designated Agent,\n\nWe have identified this content as Malicious Disinformation / Fake News with a probability score of {report.get('fake_probability')}.\n\nSource: {violation_info['url']}\nKey Findings: {report.get('authenticity_verdict')}\n\nPlease take immediate action to remove or disable access to this material.\n\nSincerely,\nAntigravity Digital Shield"
+            draft_notice = f"To the Designated Agent,\n\nWe have identified this content as Malicious Disinformation / Fake News with an authenticity score of {report.get('authenticity_score')}.\n\nSource: {violation_info['url']}\nKey Findings: Verdict is {report.get('verdict')}\n\nPlease take immediate action to remove or disable access to this material.\n\nSincerely,\nAntigravity Digital Shield"
             
             new_notice = TakedownNotice(
                 id=takedown_id,
@@ -612,10 +631,10 @@ def fingerprint_asset(request: Request, video_id: str = Form(...), file: UploadF
     if file.content_type not in ALLOWED_VIDEO_TYPES:
         raise HTTPException(status_code=415, detail=f"Unsupported file type '{file.content_type}'. Allowed: {sorted(ALLOWED_VIDEO_TYPES)}")
 
+    _check_content_length(request, MAX_ASSET_SIZE)  # Must be outside try — 413 must not be rewritten as 500
     temp_path = f"temp_index_{uuid.uuid4()}_{safe_filename(file.filename)}"
 
     try:
-        _check_content_length(request, MAX_ASSET_SIZE)
         save_upload_limited(file, temp_path, MAX_ASSET_SIZE)
             
         success = index_authorized_video(temp_path, video_id)

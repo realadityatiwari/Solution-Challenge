@@ -5,6 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 // Single source of truth for the backend URL.
 // Set BACKEND_URL in frontend/.env.local for dev, or in your deployment env for prod.
 const API_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
+const API_KEY_HEADER = { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '' };
 
 // Initialize SDK. It will pick up process.env.GEMINI_API_KEY if available.
 export async function generateTakedown(metadata: Record<string, unknown>) {
@@ -53,6 +54,7 @@ export async function analyzeNewsAction(formData: FormData) {
   try {
     const res = await fetch(`${API_BASE}/process-news`, {
       method: 'POST',
+      headers: API_KEY_HEADER,
       body: formData
     });
     if (!res.ok) {
@@ -70,8 +72,8 @@ export async function analyzeNewsAction(formData: FormData) {
     return {
       status: "success",
       report: {
-        authenticity_verdict: "Completely Fake",
-        fake_probability: 0.98,
+        verdict: "uncertain",
+        authenticity_score: 50.0,
         key_claims_analysis: [
           "Claim 1: The player was traded. FALSE. No official transaction logs exist.",
           "Claim 2: The GM gave a quote confirming it. FALSE. The quote is fabricated and uncharacteristic."
@@ -91,6 +93,7 @@ export async function uploadFingerprintAction(formData: FormData) {
   try {
     const res = await fetch(`${API_BASE}/fingerprint-asset`, {
       method: 'POST',
+      headers: API_KEY_HEADER,
       body: formData
     });
     if (!res.ok) {
@@ -135,9 +138,12 @@ export async function getTakedownQueueAction() {
 
 export async function addTakedownQueueAction(item: {id: string, notice: string, violation: Record<string, unknown>}) {
   try {
-    const res = await fetch('http://127.0.0.1:8000/takedown-queue', {
+    const res = await fetch(`${API_BASE}/takedown-queue`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        ...API_KEY_HEADER,
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify(item)
     });
     if (!res.ok) throw new Error("Backend error adding to queue");
@@ -152,6 +158,7 @@ export async function deleteTakedownQueueAction(id: string) {
   try {
     const res = await fetch(`${API_BASE}/takedown-queue/${id}`, {
       method: 'DELETE',
+      headers: API_KEY_HEADER
     });
     if (!res.ok) throw new Error("Backend error deleting from queue");
     return await res.json();
@@ -189,6 +196,7 @@ export async function dismissViolationAction(id: string) {
   try {
     const res = await fetch(`${API_BASE}/live-feed/dismiss/${id}`, {
       method: 'POST',
+      headers: API_KEY_HEADER
     });
     if (!res.ok) throw new Error("Backend error dismissing violation");
     return await res.json();

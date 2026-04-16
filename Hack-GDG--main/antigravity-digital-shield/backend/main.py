@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+import collections
+import sqlite3
+import pathlib
 import shutil
 import uuid
 import logging
@@ -10,9 +15,89 @@ import xml.etree.ElementTree as ET
 import datetime
 import re
 from typing import Optional
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
+
+# Allowed MIME types per upload endpoint
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/x-m4v", "video/quicktime", "video/webm", "video/avi"}
+ALLOWED_MEDIA_TYPES = ALLOWED_VIDEO_TYPES | {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+def safe_filename(filename: str | None) -> str:
+    """Strip any path components from a user-supplied filename to prevent path traversal."""
+    if not filename:
+        return f"upload_{uuid.uuid4().hex}"
+    return pathlib.Path(filename).name or f"upload_{uuid.uuid4().hex}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sliding-window rate limiter — stdlib only (collections, threading, time)
+# Per-IP, per-endpoint. Thread-safe via Lock.
+# ─────────────────────────────────────────────────────────────────────────────
+_rate_lock = threading.Lock()
+# key: "endpoint:client_ip"  →  value: deque of request timestamps (float)
+_rate_buckets: dict = collections.defaultdict(collections.deque)
+
+def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> bool:
+    """
+    Sliding window rate limiter. Returns True if the request is allowed.
+    Evicts timestamps older than window_seconds, then checks current count.
+    """
+    now = time.time()
+    cutoff = now - window_seconds
+    with _rate_lock:
+        dq = _rate_buckets[key]
+        while dq and dq[0] < cutoff:   # evict expired timestamps
+            dq.popleft()
+        if len(dq) >= max_requests:
+            return False               # rate limit exceeded
+        dq.append(now)
+        return True
+
+# ─────────────────────────────────────────────────────────────────────────────
+# File size limits and size-safe upload writer
+# ─────────────────────────────────────────────────────────────────────────────
+MAX_VIDEO_SIZE = 100 * 1024 * 1024   # 100 MB — video scan / piracy check
+MAX_MEDIA_SIZE =  20 * 1024 * 1024   #  20 MB — news image/video attachment
+MAX_ASSET_SIZE = 200 * 1024 * 1024   # 200 MB — authorized asset fingerprinting
+
+def _check_content_length(request: Request, max_bytes: int) -> None:
+    """Fast pre-check: reject immediately if Content-Length header exceeds limit."""
+    cl = request.headers.get("content-length")
+    if cl:
+        try:
+            if int(cl) > max_bytes:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum allowed: {max_bytes // (1024 * 1024)} MB."
+                )
+        except ValueError:
+            pass  # Malformed header — let chunked write guard catch it
+
+def save_upload_limited(upload_file, dest_path: str, max_bytes: int) -> None:
+    """
+    Write an upload to dest_path in 64 KB chunks.
+    Raises HTTP 413 and removes the partial file if max_bytes is exceeded.
+    Guards against spoofed or missing Content-Length headers.
+    """
+    written = 0
+    chunk_size = 64 * 1024  # 64 KB
+    with open(dest_path, "wb") as out:
+        while True:
+            chunk = upload_file.file.read(chunk_size)
+            if not chunk:
+                break
+            written += len(chunk)
+            if written > max_bytes:
+                # Abort — delete partial file before raising
+                out.close()
+                if os.path.exists(dest_path):
+                    os.remove(dest_path)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum allowed: {max_bytes // (1024 * 1024)} MB."
+                )
+            out.write(chunk)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,6 +121,14 @@ try:
     from analyst import analyze_news
 except ImportError:
     def analyze_news(text): return {"violation_likelihood": 0.0, "reasoning": "Mock fallback"}
+
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
+
+def verify_api_key(api_key: str = Depends(api_key_header)):
+    expected_api_key = os.environ.get("API_KEY")
+    if not expected_api_key or api_key != expected_api_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API Key")
+    return api_key
 
 app = FastAPI(title="Antigravity Digital Shield")
 
@@ -67,35 +160,61 @@ class FingerprintResponse(BaseModel):
 
 import json
 
-QUEUE_FILE = "queue_db.json"
+# ─────────────────────────────────────────────────────────────────────────────
+# SQLite persistence — replaces queue_db.json + dismissed_db.json
+# stdlib only, no new dependencies. Thread-safe via WAL mode + atomic SQL.
+# ─────────────────────────────────────────────────────────────────────────────
+DB_PATH = "shield.db"
+
+def get_db():
+    """Return a new SQLite connection with WAL mode and row factory set."""
+    con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    con.execute("PRAGMA journal_mode=WAL")  # Allows concurrent reads during writes
+    con.row_factory = sqlite3.Row
+    return con
+
+def init_db():
+    """Create tables on first run. Safe to call multiple times."""
+    with get_db() as con:
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS takedown_queue (
+                id      TEXT PRIMARY KEY,
+                notice  TEXT NOT NULL,
+                violation TEXT NOT NULL
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS dismissed (
+                id TEXT PRIMARY KEY
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS violations (
+                id            TEXT PRIMARY KEY,  -- MD5-based V-XXXXXX, deduplicates by URL
+                url           TEXT NOT NULL UNIQUE,
+                title         TEXT NOT NULL,
+                channel       TEXT NOT NULL,
+                match_score   REAL NOT NULL,
+                timestamp     TEXT NOT NULL,
+                suspect_thumb TEXT NOT NULL DEFAULT ''
+            )
+        """)
+        # rowid is the implicit primary key — ORDER BY rowid DESC LIMIT N is O(log N)
+    logging.info("SQLite DB initialised at %s", DB_PATH)
 
 def load_queue():
-    if os.path.exists(QUEUE_FILE):
-        try:
-            with open(QUEUE_FILE, "r") as f:
-                return json.load(f)
-        except:
-            return []
-    return []
-
-def save_queue(q):
-    with open(QUEUE_FILE, "w") as f:
-        json.dump(q, f, indent=4)
-
-DISMISSED_FILE = "dismissed_db.json"
+    """Return all takedown queue items ordered newest-first."""
+    with get_db() as con:
+        rows = con.execute(
+            "SELECT id, notice, violation FROM takedown_queue ORDER BY rowid DESC"
+        ).fetchall()
+    return [{"id": r["id"], "notice": r["notice"], "violation": json.loads(r["violation"])} for r in rows]
 
 def load_dismissed():
-    if os.path.exists(DISMISSED_FILE):
-        try:
-            with open(DISMISSED_FILE, "r") as f:
-                return json.load(f)
-        except:
-            return []
-    return []
-
-def save_dismissed(d):
-    with open(DISMISSED_FILE, "w") as f:
-        json.dump(d, f, indent=4)
+    """Return the set of dismissed item IDs."""
+    with get_db() as con:
+        rows = con.execute("SELECT id FROM dismissed").fetchall()
+    return {r["id"] for r in rows}
 
 class TakedownNotice(BaseModel):
     id: str
@@ -210,18 +329,10 @@ def fetch_live_news_loop():
 
     while True:
         try:
-            # Load existing URLs to prevent duplicates
-            existing_urls = set()
-            if os.path.exists("violations.log"):
-                with open("violations.log", "r") as f:
-                    for line in f:
-                        if not line.strip():
-                            continue
-                        try:
-                            d = json.loads(line)
-                            existing_urls.add(d.get("url", ""))
-                        except Exception:
-                            pass
+            # Load existing URLs from DB to prevent duplicates (single indexed query)
+            with get_db() as con:
+                rows = con.execute("SELECT url FROM violations").fetchall()
+            existing_urls = {r["url"] for r in rows}
 
             # Pull from next 3 feeds in rotation (round-robin across all 16 feeds)
             feeds_this_cycle = [
@@ -243,9 +354,25 @@ def fetch_live_news_loop():
                     existing_urls.add(entry["url"])
 
             if all_new_entries:
-                with open("violations.log", "a") as f:
+                # Write to SQLite with INSERT OR IGNORE — URL UNIQUE constraint deduplicates
+                with get_db() as con:
                     for entry in all_new_entries:
-                        f.write(json.dumps(entry) + "\n")
+                        vid_url = entry["url"]
+                        vid_id = "V-" + hashlib.md5(vid_url.encode()).hexdigest()[:6].upper()
+                        con.execute(
+                            "INSERT OR IGNORE INTO violations "
+                            "(id, url, title, channel, match_score, timestamp, suspect_thumb) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                vid_id,
+                                vid_url,
+                                entry["title"],
+                                entry["channel"],
+                                entry["match_score"],
+                                entry["timestamp"],
+                                entry.get("suspect_thumb", ""),
+                            )
+                        )
                 logging.info(
                     f"ARGUS Sentry: Injected {len(all_new_entries)} items from categories: {', '.join(categories_fetched)}"
                 )
@@ -258,6 +385,7 @@ def fetch_live_news_loop():
 
 @app.on_event("startup")
 def start_background_tasks():
+    init_db()  # Ensure SQLite tables exist before any request is served
     thread = threading.Thread(target=fetch_live_news_loop, daemon=True)
     thread.start()
     logging.info("Started background live news fetching persistent agent.")
@@ -269,67 +397,60 @@ def read_root():
 @app.get("/live-feed")
 def get_live_feed():
     try:
-        if not os.path.exists("violations.log"):
-            return {"status": "success", "violations": []}
-            
-        dismissed = load_dismissed()
-        queued = [q.get("id") for q in load_queue()]
-        
+        dismissed = load_dismissed()          # returns a set — O(1) lookups
+        queued_ids = {q.get("id") for q in load_queue()}
+
+        # Fetch only the latest 200 rows — O(log N) via rowid index, never a full scan
+        with get_db() as con:
+            rows = con.execute(
+                "SELECT id, url, title, channel, match_score, timestamp, suspect_thumb "
+                "FROM violations ORDER BY rowid DESC LIMIT 200"
+            ).fetchall()
+
         violations = []
-        with open("violations.log", "r") as f:
-            for line in f:
-                if not line.strip():
-                    continue
+        for row in rows:
+            vid_id = row["id"]
+            if vid_id in dismissed or vid_id in queued_ids:
+                continue
+
+            vid_url = row["url"]
+            suspect_thumb = row["suspect_thumb"]
+
+            if "youtube.com/watch?v=" in vid_url:
                 try:
-                    data = json.loads(line)
-                    # Generate a consistent ID based on the URL
-                    vid_url = data.get("url", "")
-                    vid_id = "V-" + hashlib.md5(vid_url.encode()).hexdigest()[:6].upper()
-                    
-                    if vid_id in dismissed or vid_id in queued:
-                        continue
-                        
-                    suspect_thumb = data.get("suspect_thumb", "")
-                    
-                    if "youtube.com/watch?v=" in vid_url:
-                        try:
-                            video_id = vid_url.split("v=")[1].split("&")[0]
-                            suspect_thumb = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
-                        except:
-                            pass
-                            
-                    if not suspect_thumb:
-                        suspect_thumb = f"https://picsum.photos/seed/{vid_id}/400/225"
-                        
-                    official_thumb = f"https://picsum.photos/seed/off_{vid_id}/400/225"
-                        
-                    violations.append({
-                        "id": vid_id,
-                        "title": data.get("title", "Unknown Title"),
-                        "channel": data.get("channel", "Unknown Channel"),
-                        "url": vid_url,
-                        "match_score": data.get("match_score", 0.0),
-                        "timestamp": data.get("timestamp", "Just now"),
-                        "official_asset": "NBA_VAULT_DETECTED",
-                        "official_thumb": official_thumb,
-                        "pirated_thumb": suspect_thumb
-                    })
-                except json.JSONDecodeError:
-                    continue
-        
-        # Sort by match score descending
+                    video_id = vid_url.split("v=")[1].split("&")[0]
+                    suspect_thumb = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+                except Exception:
+                    pass
+
+            if not suspect_thumb:
+                suspect_thumb = f"https://picsum.photos/seed/{vid_id}/400/225"
+
+            official_thumb = f"https://picsum.photos/seed/off_{vid_id}/400/225"
+
+            violations.append({
+                "id": vid_id,
+                "title": row["title"],
+                "channel": row["channel"],
+                "url": vid_url,
+                "match_score": row["match_score"],
+                "timestamp": row["timestamp"],
+                "official_asset": "NBA_VAULT_DETECTED",
+                "official_thumb": official_thumb,
+                "pirated_thumb": suspect_thumb,
+            })
+
         violations.sort(key=lambda x: x["match_score"], reverse=True)
         return {"status": "success", "violations": violations}
     except Exception as e:
-        print(f"Error fetching live feed: {e}")
+        logging.error(f"Error fetching live feed: {e}")
         return {"status": "error", "violations": []}
 
 @app.post("/live-feed/dismiss/{item_id}")
 def dismiss_violation(item_id: str):
-    d = load_dismissed()
-    if item_id not in d:
-        d.append(item_id)
-        save_dismissed(d)
+    # INSERT OR IGNORE is atomic — no R-M-W race condition
+    with get_db() as con:
+        con.execute("INSERT OR IGNORE INTO dismissed (id) VALUES (?)", (item_id,))
     return {"status": "success", "message": f"Dismissed {item_id}"}
 
 
@@ -339,18 +460,18 @@ def get_takedown_queue():
 
 @app.post("/takedown-queue")
 def add_takedown(notice: TakedownNotice):
-    q = load_queue()
-    # Check if already exists just in case
-    if not any(item.get("id") == notice.id for item in q):
-        q.insert(0, notice.dict())
-        save_queue(q)
+    # INSERT OR IGNORE prevents duplicates atomically — no list scan required
+    with get_db() as con:
+        con.execute(
+            "INSERT OR IGNORE INTO takedown_queue (id, notice, violation) VALUES (?, ?, ?)",
+            (notice.id, notice.notice, json.dumps(notice.violation))
+        )
     return {"status": "success", "message": "Notice added to queue."}
 
 @app.delete("/takedown-queue/{item_id}")
-def delete_takedown(item_id: str):
-    q = load_queue()
-    q = [item for item in q if item.get("id") != item_id]
-    save_queue(q)
+def delete_takedown(item_id: str, api_key: str = Depends(verify_api_key)):
+    with get_db() as con:
+        con.execute("DELETE FROM takedown_queue WHERE id = ?", (item_id,))
     return {"status": "success", "message": f"Sent notice {item_id}"}
 
 @app.get("/logs")
@@ -377,18 +498,23 @@ def get_fingerprints():
 
 # FIX 2: Removed 'async' so FastAPI uses a thread pool for blocking CPU tasks
 @app.post("/process-media", response_model=ProcessMediaResponse)
-def process_media(file: UploadFile = File(...)):
+def process_media(request: Request, file: UploadFile = File(...), api_key: str = Depends(verify_api_key)):
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"process-media:{client_ip}", max_requests=10, window_seconds=60):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded: max 10 video scans per minute per IP.")
+
     if not file:
         raise HTTPException(status_code=400, detail="No file uploaded")
-    
-    # FIX 3: Use UUID to prevent filename collisions if two users upload 'video.mp4'
+    if file.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type '{file.content_type}'. Allowed: {sorted(ALLOWED_VIDEO_TYPES)}")
+
+    _check_content_length(request, MAX_VIDEO_SIZE)
+
     media_id = str(uuid.uuid4())
-    temp_path = f"temp_{media_id}_{file.filename}"
-    
+    temp_path = f"temp_{media_id}_{safe_filename(file.filename)}"
+
     try:
-        # Securely save the uploaded file
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        save_upload_limited(file, temp_path, MAX_VIDEO_SIZE)
         
         # Logic execution
         result = check_similarity(temp_path)
@@ -415,17 +541,25 @@ def process_media(file: UploadFile = File(...)):
     )
 
 @app.post("/process-news", response_model=ProcessNewsResponse)
-def process_news(news_text: Optional[str] = Form(None), file: Optional[UploadFile] = File(None)):
+def process_news(request: Request, news_text: Optional[str] = Form(None), file: Optional[UploadFile] = File(None), api_key: str = Depends(verify_api_key)):
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"process-news:{client_ip}", max_requests=5, window_seconds=60):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded: max 5 news analyses per minute per IP.")
+
     if not news_text and not file:
         raise HTTPException(status_code=400, detail="Must provide either text, a URL, or a media file (image/video).")
-        
+    if file and file.content_type not in ALLOWED_MEDIA_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type '{file.content_type}'. Allowed: {sorted(ALLOWED_MEDIA_TYPES)}")
+
     temp_path = None
     if file:
+        _check_content_length(request, MAX_MEDIA_SIZE)
         media_id = str(uuid.uuid4())
-        temp_path = f"temp_news_{media_id}_{file.filename}"
+        temp_path = f"temp_news_{media_id}_{safe_filename(file.filename)}"
         try:
-            with open(temp_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+            save_upload_limited(file, temp_path, MAX_MEDIA_SIZE)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail="Failed to save media file") from e
         finally:
@@ -468,15 +602,21 @@ def process_news(news_text: Optional[str] = Form(None), file: Optional[UploadFil
             os.remove(temp_path)
 
 @app.post("/fingerprint-asset", response_model=FingerprintResponse)
-def fingerprint_asset(video_id: str = Form(...), file: UploadFile = File(...)):
+def fingerprint_asset(request: Request, video_id: str = Form(...), file: UploadFile = File(...), api_key: str = Depends(verify_api_key)):
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"fingerprint-asset:{client_ip}", max_requests=5, window_seconds=60):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded: max 5 fingerprint uploads per minute per IP.")
+
     if not file:
         raise HTTPException(status_code=400, detail="No video file uploaded")
-        
-    temp_path = f"temp_index_{uuid.uuid4()}_{file.filename}"
-    
+    if file.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type '{file.content_type}'. Allowed: {sorted(ALLOWED_VIDEO_TYPES)}")
+
+    temp_path = f"temp_index_{uuid.uuid4()}_{safe_filename(file.filename)}"
+
     try:
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        _check_content_length(request, MAX_ASSET_SIZE)
+        save_upload_limited(file, temp_path, MAX_ASSET_SIZE)
             
         success = index_authorized_video(temp_path, video_id)
         if not success:
@@ -484,7 +624,7 @@ def fingerprint_asset(video_id: str = Form(...), file: UploadFile = File(...)):
             
         return FingerprintResponse(
             status="success",
-            message="Video successfully fingerprinted and added to ChromaDB Vault.",
+            message="Video successfully fingerprinted and added to Shield DB Vault.",
             video_id=video_id
         )
     except Exception as e:

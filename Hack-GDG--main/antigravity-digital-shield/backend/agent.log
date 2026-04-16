@@ -98,3 +98,41 @@
 2026-04-08 23:17:19,861 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
 2026-04-08 23:17:19,880 [ERROR] Failed to analyze news data: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
 2026-04-08 23:31:59,796 [INFO] Started background live news fetching persistent agent.
+2026-04-12 11:53:37,051 [WARNING] Could not initialize genai.Client: No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.. Set GOOGLE_API_KEY environment variable.
+2026-04-12 11:53:37,076 [ERROR] Task exception was never retrieved
+future: <Task finished name='Task-2' coro=<BaseApiClient.aclose() done, defined at C:\Users\Lenovo\AppData\Local\Programs\Python\Python313\Lib\site-packages\google\genai\_api_client.py:2100> exception=AttributeError("'BaseApiClient' object has no attribute '_async_httpx_client'")>
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\AppData\Local\Programs\Python\Python313\Lib\site-packages\google\genai\_api_client.py", line 2105, in aclose
+    await self._async_httpx_client.aclose()  # type: ignore[union-attr]
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
+2026-04-12 11:53:37,080 [INFO] Started background live news fetching persistent agent.
+2026-04-12 11:54:39,768 [INFO] Analyzing news snippet (text len: 28, media: None)
+2026-04-12 11:54:59,618 [INFO] Analyzing news snippet (text len: 46, media: None)
+2026-04-12 11:55:16,679 [INFO] Analyzing news snippet (text len: 19, media: None)
+2026-04-12 11:56:32,092 [INFO] Analyzing news snippet (text len: 1064, media: None)
+2026-04-12 12:37:40,890 [INFO] Started background live news fetching persistent agent.
+2026-04-12 12:39:35,111 [INFO] Analyzing news snippet (text len: 236, media: None)
+2026-04-12 12:39:35,114 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-12 12:39:42,847 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-12 12:39:42,885 [INFO] ARGUS Analysis Complete — Category: Sports | Verdict: Verified | Fake Prob: 0.05
+2026-04-12 12:40:47,756 [INFO] Analyzing news snippet (text len: 28, media: None)
+2026-04-12 12:40:47,757 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-12 12:41:07,327 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-12 12:41:07,332 [INFO] ARGUS Analysis Complete — Category: Sports | Verdict: Completely Fake | Fake Prob: 0.92
+2026-04-13 00:06:48,117 [INFO] SQLite DB initialised at shield.db
+2026-04-13 00:06:48,122 [INFO] Started background live news fetching persistent agent.
+2026-04-13 00:08:59,687 [INFO] Analyzing news snippet (text len: 130, media: None)
+2026-04-13 00:08:59,696 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-13 00:09:09,365 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-13 00:09:09,459 [INFO] ARGUS Analysis Complete — Category: Technology & AI | Verdict: Verified | Fake Prob: 0.05
+2026-04-13 00:11:55,232 [INFO] SQLite DB initialised at shield.db
+2026-04-13 00:11:55,233 [INFO] Started background live news fetching persistent agent.
+2026-04-13 00:14:00,450 [INFO] SQLite DB initialised at shield.db
+2026-04-13 00:14:00,451 [INFO] Started background live news fetching persistent agent.
+2026-04-13 00:24:02,921 [INFO] SQLite DB initialised at shield.db
+2026-04-13 00:24:02,922 [INFO] Started background live news fetching persistent agent.
+2026-04-13 00:24:03,224 [INFO] SQLite DB initialised at shield.db
+2026-04-13 00:24:03,226 [INFO] Started background live news fetching persistent agent.
+2026-04-16 20:12:55,387 [INFO] SQLite DB initialised at shield.db
+2026-04-16 20:12:55,390 [INFO] Started background live news fetching persistent agent.

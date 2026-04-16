@@ -2,6 +2,10 @@
 
 import { GoogleGenAI } from '@google/genai';
 
+// Single source of truth for the backend URL.
+// Set BACKEND_URL in frontend/.env.local for dev, or in your deployment env for prod.
+const API_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
+
 // Initialize SDK. It will pick up process.env.GEMINI_API_KEY if available.
 export async function generateTakedown(metadata: Record<string, unknown>) {
   try {
@@ -47,7 +51,7 @@ Antigravity Digital Shield`;
 
 export async function analyzeNewsAction(formData: FormData) {
   try {
-    const res = await fetch('http://127.0.0.1:8000/process-news', {
+    const res = await fetch(`${API_BASE}/process-news`, {
       method: 'POST',
       body: formData
     });
@@ -85,7 +89,7 @@ export async function analyzeNewsAction(formData: FormData) {
 
 export async function uploadFingerprintAction(formData: FormData) {
   try {
-    const res = await fetch('http://127.0.0.1:8000/fingerprint-asset', {
+    const res = await fetch(`${API_BASE}/fingerprint-asset`, {
       method: 'POST',
       body: formData
     });
@@ -107,7 +111,7 @@ export async function uploadFingerprintAction(formData: FormData) {
 
 export async function getFingerprintsAction() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/fingerprints', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/fingerprints`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Backend error fetching fingerprints");
     const data = await res.json();
     return data.fingerprints || [];
@@ -119,7 +123,7 @@ export async function getFingerprintsAction() {
 
 export async function getTakedownQueueAction() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/takedown-queue', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/takedown-queue`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Backend error fetching queue");
     const data = await res.json();
     return data.queue || [];
@@ -146,7 +150,7 @@ export async function addTakedownQueueAction(item: {id: string, notice: string, 
 
 export async function deleteTakedownQueueAction(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/takedown-queue/${id}`, {
+    const res = await fetch(`${API_BASE}/takedown-queue/${id}`, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error("Backend error deleting from queue");
@@ -159,7 +163,7 @@ export async function deleteTakedownQueueAction(id: string) {
 
 export async function getAgentLogsAction() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/logs', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/logs`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Backend error fetching logs");
     const data = await res.json();
     return data.logs || "No logs available.";
@@ -171,7 +175,7 @@ export async function getAgentLogsAction() {
 
 export async function getLiveFeedAction() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/live-feed', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/live-feed`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Backend error fetching live feed");
     const data = await res.json();
     return data.violations || [];
@@ -183,7 +187,7 @@ export async function getLiveFeedAction() {
 
 export async function dismissViolationAction(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/live-feed/dismiss/${id}`, {
+    const res = await fetch(`${API_BASE}/live-feed/dismiss/${id}`, {
       method: 'POST',
     });
     if (!res.ok) throw new Error("Backend error dismissing violation");

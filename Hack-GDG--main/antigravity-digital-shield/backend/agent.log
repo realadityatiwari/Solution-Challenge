@@ -288,3 +288,49 @@ AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
 2026-04-17 00:31:45,933 [INFO] ARGUS Sentry: Injected 1 items from categories: Finance & Cryptocurrency
 2026-04-17 00:34:34,059 [INFO] ARGUS Sentry: Injected 2 items from categories: Finance & Cryptocurrency
 2026-04-17 00:35:06,974 [INFO] ARGUS Sentry: Injected 1 items from categories: Entertainment & Celebrity
+2026-04-17 00:36:13,046 [INFO] ARGUS Sentry: Injected 1 items from categories: World News
+2026-04-17 00:37:50,799 [INFO] ARGUS Sentry: Injected 1 items from categories: Sports
+2026-04-22 23:30:44,748 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-22 23:30:44,753 [INFO] Started background live news fetching persistent agent.
+2026-04-22 23:30:58,539 [INFO] ARGUS Sentry: Injected 6 items from categories: World News, World News, Politics & Elections
+2026-04-22 23:31:34,531 [INFO] ARGUS Sentry: Injected 4 items from categories: Health & Medicine, Science & Climate
+2026-04-22 23:32:12,605 [INFO] ARGUS Sentry: Injected 6 items from categories: Science & Climate, Technology & AI, Finance & Cryptocurrency
+2026-04-22 23:32:52,679 [INFO] ARGUS Sentry: Injected 6 items from categories: Finance & Cryptocurrency, Sports, Sports
+2026-04-22 23:33:30,958 [INFO] ARGUS Sentry: Injected 6 items from categories: Entertainment & Celebrity, War & Conflict, Science & Climate
+2026-04-22 23:34:04,714 [INFO] ARGUS Sentry: Injected 2 items from categories: Social Media Viral Content
+2026-04-22 23:35:11,506 [INFO] ARGUS Sentry: Injected 1 items from categories: Science & Climate
+2026-04-22 23:36:19,325 [INFO] ARGUS Sentry: Injected 2 items from categories: Sports
+2026-04-22 23:36:53,246 [INFO] ARGUS Sentry: Injected 1 items from categories: World News
+2026-04-22 23:37:27,552 [INFO] ARGUS Sentry: Injected 1 items from categories: Politics & Elections
+2026-04-22 23:42:24,321 [INFO] ARGUS Sentry: Injected 1 items from categories: Entertainment & Celebrity
+2026-04-22 23:44:37,574 [INFO] ARGUS Sentry: Injected 2 items from categories: Sports
+2026-04-22 23:50:07,986 [INFO] ARGUS Sentry: Injected 1 items from categories: Technology & AI
+2026-04-22 23:52:03,592 [INFO] SQLite DB initialised at C:\Hack123\Solution-Challenge\Hack-GDG--main\antigravity-digital-shield\backend\shield.db
+2026-04-22 23:52:03,594 [INFO] Started background live news fetching persistent agent.
+2026-04-22 23:52:45,576 [INFO] ARGUS Sentry: Injected 1 items from categories: Health & Medicine
+2026-04-22 23:53:47,535 [INFO] Analyzing news snippet (text len: 32, media: None)
+2026-04-22 23:53:47,542 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-22 23:53:51,454 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-22 23:53:51,466 [INFO] Raw Gemini response: {
+  "authenticity_score": 100,
+  "verdict": "true",
+  "reasoning": "Shah Rukh Khan is indeed a co-owner of the Kolkata Knight Riders (KKR) IPL team. His company, Red Chillies Entertainment, holds a significant stake in the franchise. This is a widely known and publicly verifiable fact, consistently reported by official IPL sources, the KKR franchise itself, and all major sports and business news outlets.",
+  "confidence": "high"
+}
+2026-04-22 23:53:51,467 [INFO] Parsed JSON: {"authenticity_score": 100, "verdict": "true", "reasoning": "Shah Rukh Khan is indeed a co-owner of the Kolkata Knight Riders (KKR) IPL team. His company, Red Chillies Entertainment, holds a significant stake in the franchise. This is a widely known and publicly verifiable fact, consistently reported by official IPL sources, the KKR franchise itself, and all major sports and business news outlets.", "confidence": "high"}
+2026-04-22 23:53:51,497 [INFO] ARGUS Analysis Complete — Verdict: true | Score: 100.00
+2026-04-22 23:53:53,695 [INFO] ARGUS Sentry: Injected 2 items from categories: Finance & Cryptocurrency
+2026-04-22 23:54:27,353 [INFO] ARGUS Sentry: Injected 1 items from categories: Entertainment & Celebrity
+2026-04-22 23:54:29,412 [INFO] Analyzing news snippet (text len: 30, media: None)
+2026-04-22 23:54:29,412 [INFO] AFC is enabled with max remote calls: 10.
+2026-04-22 23:54:32,904 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-22 23:54:32,908 [INFO] Raw Gemini response: {
+  "authenticity_score": 5,
+  "verdict": "false",
+  "reasoning": "The statement 'Shah Rukh Khan is owner of LSG' is false. The Lucknow Super Giants (LSG) IPL team is owned by the RPSG Group, led by Sanjiv Goenka. Shah Rukh Khan is a co-owner of another IPL team, the Kolkata Knight Riders (KKR), along with Juhi Chawla and Jay Mehta. This is publicly verifiable information through official IPL and team websites.",
+  "confidence": "high"
+}
+2026-04-22 23:54:32,909 [INFO] Parsed JSON: {"authenticity_score": 5, "verdict": "false", "reasoning": "The statement 'Shah Rukh Khan is owner of LSG' is false. The Lucknow Super Giants (LSG) IPL team is owned by the RPSG Group, led by Sanjiv Goenka. Shah Rukh Khan is a co-owner of another IPL team, the Kolkata Knight Riders (KKR), along with Juhi Chawla and Jay Mehta. This is publicly verifiable information through official IPL and team websites.", "confidence": "high"}
+2026-04-22 23:54:32,909 [INFO] ARGUS Analysis Complete — Verdict: uncertain | Score: 50.00
+2026-04-22 23:55:01,694 [INFO] ARGUS Sentry: Injected 2 items from categories: Social Media Viral Content, World News
+2026-04-23 00:02:41,214 [INFO] ARGUS Sentry: Injected 2 items from categories: Finance & Cryptocurrency, Sports
